@@ -17,7 +17,7 @@ def init_chain():
         allow_dangerous_deserialization=True,
     )
     retriever = vectordb.as_retriever(search_kwargs={"k": 8})
-    llm = Ollama(model="google/gemma-3-4b-it", temperature=0.1)
+    llm = Ollama(model="gemma-3-4b", temperature=0.1)
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
