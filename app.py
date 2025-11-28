@@ -2,6 +2,7 @@ import pathlib, streamlit as st
 from langchain_classic.vectorstores import FAISS
 from langchain_classic.embeddings import HuggingFaceEmbeddings
 from langchain_classic.llms import Ollama
+from openai import OpenAI
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
 
@@ -17,7 +18,8 @@ def init_chain():
         allow_dangerous_deserialization=True,
     )
     retriever = vectordb.as_retriever(search_kwargs={"k": 8})
-    llm = Ollama(model="gemma-3-4b", temperature=0.1)
+    #llm = Ollama(model="gemma-3-4b", temperature=0.1)
+    llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
