@@ -1,0 +1,6 @@
+streamlit 
+openai 
+faiss-gpu
+faiss-GPU
+langchain
+langchain-classic
