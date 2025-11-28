@@ -12,3 +12,4 @@ dependencies:
       - openai==1.79.0
       - faiss-cpu==1.11.0
       - unstructured==0.17.2
+      - langchain-classic==1.0.0
