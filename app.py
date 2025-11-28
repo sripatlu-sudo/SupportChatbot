@@ -1,9 +1,9 @@
 import pathlib, streamlit as st
-from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.llms import Ollama
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
+from langchain_classic.vectorstores import FAISS
+from langchain_classic.embeddings import HuggingFaceEmbeddings
+from langchain_classic.llms import Ollama
+from langchain_classic.chains import ConversationalRetrievalChain
+from langchain_classic.memory import ConversationBufferMemory
 
 st.set_page_config(page_title="Spectrum Support Chatbot")
 st.title("Spectrum Support Chatbot")
