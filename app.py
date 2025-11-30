@@ -133,7 +133,7 @@ if "history" not in st.session_state:
 # -----------------------------------
 # CHAT INPUT (same logic, themed UI)
 # -----------------------------------
-question = st.chat_input("💬 Ask Spectrum Techno Assistant...")
+question = st.chat_input("💬 How can we help you?")
 
 if question:
     with st.spinner("⚡ Processing with AI Techno Core..."):
