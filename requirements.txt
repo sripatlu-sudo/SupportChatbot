@@ -1,6 +1,5 @@
 streamlit 
 openai 
-faiss-gpu
 langchain
 langchain-classic
 langchain-openai
