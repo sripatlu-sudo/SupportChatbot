@@ -5,4 +5,3 @@ faiss-GPU
 langchain
 langchain-classic
 langchain_openai
-os
