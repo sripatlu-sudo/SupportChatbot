@@ -4,4 +4,5 @@ langchain
 langchain-classic
 langchain-openai
 langchain-community
-sentence-transformers 
+sentence-transformers
+faiss-gpu 
