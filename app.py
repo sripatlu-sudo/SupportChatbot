@@ -77,7 +77,7 @@ st.markdown(
 
     </style>
 
-    <div class="fest-title">⚡ Spectrum Support Chatbot</div>
+    <div class="fest-title">⚡ Customer Support Chatbot</div>
     <div class="fest-subtitle">AI Techno Fest Edition • Powering Answers with AI</div>
     """,
     unsafe_allow_html=True,
