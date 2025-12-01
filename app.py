@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 # -----------------------------------
 # PAGE SETUP — AI TECHNO FEST THEME
 # -----------------------------------
-st.set_page_config(page_title="Customer Support Chatbot • AI Techno Fest", layout="wide")
+st.set_page_config(page_title="Customer Support Chatbot", layout="wide")
 
 st.markdown(
     """
