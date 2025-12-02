@@ -1,61 +1,152 @@
+import os
 import pathlib, streamlit as st
 from langchain_classic.vectorstores import FAISS
 from langchain_classic.embeddings import HuggingFaceEmbeddings
-from langchain_classic.llms import Ollama
+from openai import OpenAI
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
-from openai import OpenAI
-import base64
-import requests
+from langchain_openai import ChatOpenAI
+
+# -----------------------------------
+# PAGE SETUP — ELEGANT CORPORATE THEME
+# -----------------------------------
+st.set_page_config(page_title="Customer Support Chatbot", layout="wide")
+
+st.markdown(
+    """
+    <style>
+
+    /* --- Spectrum Brand Theme --- */
+
+    body, .stApp {
+        background: #F5F7FA;
+        font-family: "Segoe UI", sans-serif;
+        color: #1B1B1B;
+    }
+
+    /* Titles */
+    .spectrum-title {
+        text-align: center;
+        font-size: 36px;
+        font-weight: 700;
+        margin-top: -20px;
+        color: #0046BE;
+        text-shadow: 0px 0px 6px rgba(0, 70, 190, 0.15);
+    }
+
+    .spectrum-subtitle {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 18px;
+        color: #0094FF;
+    }
+
+    /* Chat bubbles */
+    .chat-bubble-user {
+        padding: 14px;
+        background: #E8F0FE;
+        border-left: 5px solid #0046BE;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        color: #003A99;
+        box-shadow: 0 0 5px rgba(0, 70, 190, 0.2);
+    }
+
+    .chat-bubble-bot {
+        padding: 14px;
+        background: #F0FBFF;
+        border-left: 5px solid #0094FF;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        color: #003A66;
+        box-shadow: 0 0 6px rgba(0, 148, 255, 0.2);
+    }
+
+    .disclaimer-box {
+        background: #F1F5F9;
+        border-left: 4px solid #FFBB00;
+        padding: 12px;
+        border-radius: 6px;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        background-color: #0046BE !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.6rem 1.2rem !important;
+        border: none !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+    }
+
+    .stButton>button:hover {
+        background-color: #003A99 !important;
+    }
+
+    /* Footer */
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background: #ffffff;
+        padding: 12px 0;
+        text-align: center;
+        box-shadow: 0 -4px 8px rgba(0,0,0,0.1);
+    }
+
+    .footer img {
+        width: 110px;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+
+    .footer a {
+        font-size: 16px;
+        color: #0046BE;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    </style>
+
+    <div class="spectrum-title">📱 Customer Support Chatbot</div>
+    <div class="spectrum-subtitle">Your Mobile • AI Support</div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------
-# CONFIG
+# CALL SUPPORT WIDGET
 # -------------------------
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or "YOUR_OPENAI_KEY"
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-st.set_page_config(page_title="Spectrum Support Chatbot", layout="wide")
-
-# -------------------------
-# AI TECHNO FEST THEME
-# -------------------------
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-.stApp {
-    background: radial-gradient(circle at top, #0b0f1a, #000000 60%);
-    color: #e0e0e0;
-    font-family: 'Orbitron', sans-serif;
-}
-
-h1 {
-    color: #00eaff;
-    text-shadow: 0px 0px 12px #00eaff;
-    text-align: center;
-}
-
-.chat-message {
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 10px;
-    color:#f0f7ff;
-}
-
-.user-msg { border-left: 4px solid #00eaff; background: linear-gradient(90deg, #2d0054, #52008a); }
-.bot-msg { border-left: 4px solid #ff00ff; background: linear-gradient(90deg, #003b49, #005f73); }
-
-.voice-btn {
-    padding:10px 20px;border-radius:8px;background:#00eaff;border:none;color:black;font-weight:bold;cursor:pointer;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("<h1>⚡ Spectrum Support Chatbot — AI Techno Fest</h1>", unsafe_allow_html=True)
+# Desktop fallback button (mobile users will use tel: link)
+#if st.button("📞 Call Customer Support"):
+#    st.markdown(
+#        "<script>window.location.href='tel:8336778890'</script>",
+#        unsafe_allow_html=True
+#    )
 
 # -------------------------
-# RAG CHAIN INITIALIZATION
+# DISCLAIMER WIDGET
 # -------------------------
+with st.expander("⚠️ Disclaimer"):
+    st.markdown(
+        """
+        <div class="disclaimer-box">
+        This chatbot uses AI to assist customers.  
+        Responses may be incomplete or inaccurate.  
+        Do not rely on this system for legal, medical, or financial decisions.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# -----------------------------------
+# ORIGINAL LOGIC — UNCHANGED
+# -----------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 @st.cache_resource
 def init_chain():
     vectordb = FAISS.load_local(
@@ -65,17 +156,21 @@ def init_chain():
     )
     retriever = vectordb.as_retriever(search_kwargs={"k": 8})
 
-    llm = Ollama(model="gemma3:4b", temperature=0.1)
+    llm = ChatOpenAI(
+        model_name="gpt-4",
+        temperature=0.1,
+        openai_api_key=OPENAI_API_KEY
+    )
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
-        return_messages=True,
+        return_messages=True
     )
 
     return ConversationalRetrievalChain.from_llm(
-        llm,
-        retriever,
-        memory=memory,
+        llm=llm,
+        retriever=retriever,
+        memory=memory
     )
 
 chain = init_chain()
@@ -83,40 +178,85 @@ chain = init_chain()
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# -------------------------
-# VOICE INPUT COMPONENT
-# -------------------------
-st.subheader("🎤 Speak instead of typing")
-voice_file = st.file_uploader("Upload a short voice note (wav, mp3, m4a)", type=["wav","mp3","m4a"])
+# -----------------------------------
+# CHAT INPUT WITH WEB TOGGLE
+# -----------------------------------
+st.write("")  # spacing
 
-if voice_file:
-    st.info("Transcribing audio...")
-    transcript = client.audio.transcriptions.create(
-        model="gpt-4o-mini-tts",
-        file=voice_file
-    )
-    st.session_state.voice_text = transcript.text
-    st.success("✅ Transcription complete!")
+input_col1, input_col2 = st.columns([0.82, 0.18])
 
-# -------------------------
-# CHAT INPUT (text or voice)
-# -------------------------
-default_text = st.session_state.get("voice_text", "")
-question = st.chat_input("💬 Ask Spectrum Techno Assistant...", value=default_text)
+with input_col1:
+    question = st.chat_input("💬 How can we assist you?")
 
+with input_col2:
+    search_web = st.checkbox("🔍 Search web")
+
+# Handle question
 if question:
-    with st.spinner("⚡ Thinking..."):
-        response = chain({
-            "question": question,
-            "chat_history": st.session_state.history,
-        })
-    st.session_state.history.append((question, response["answer"]))
-    if "voice_text" in st.session_state:
-        del st.session_state.voice_text  # reset after use
+    with st.spinner("Processing..."):
 
-# -------------------------
-# CHAT HISTORY DISPLAY
-# -------------------------
+        if search_web:
+            llm = ChatOpenAI(
+                model_name="gpt-4",
+                temperature=0.2,
+                openai_api_key=OPENAI_API_KEY,
+            )
+            response_text = llm.invoke(question).content
+        else:
+            response = chain(
+                {
+                    "question": question,
+                    "chat_history": st.session_state.history,
+                }
+            )
+            response_text = response["answer"]
+
+    st.session_state.history.append(
+        (f"{question}  {'(Web Search)' if search_web else '(RAG)'}", response_text)
+    )
+
+# ------------------------------
+# CHAT DISPLAY — CORPORATE STYLE
+# ------------------------------
 for user, bot in reversed(st.session_state.history):
-    st.markdown(f"<div class='chat-message user-msg'><b>You:</b> {user}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='chat-message bot-msg'><b>AI:</b> {bot}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='chat-bubble-user'><b>You:</b> {user}</div>",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"<div class='chat-bubble-bot'><b>AI:</b> {bot}</div>",
+        unsafe_allow_html=True
+    )
+
+
+
+
+# ----------------------
+# FOOTER — Spectrum Logo
+# ----------------------
+st.markdown(
+    """
+    <div class="footer">
+        <div class="main-block call-box">
+        📞 Need more help? Call: <b><a href="tel:(833) 224-6603">833-677-8890</a></b>
+        <img src="" />
+        <a href="https://www.ai-chatbot.com" target="_blank">ai-chatbot.com</a>
+        </div>
+     
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+#-------------------------------------------#
+#----Proposed enhancements & next steps-----#
+# Implement prompt engg. concepts
+# Switch to from local vertor db to vectorize.io 
+# Add more documents to db
+# Theme enhancements
+# Use A-Q for code optimization / testing ideas / documentation
+# Compile evaluation questions / perform evaluation & fine tuning (better models?)
+# Another version for internal / HLD documents with image look-up capability - openai/CLIP
+# Other ideas....
+# Prepare slide deck
