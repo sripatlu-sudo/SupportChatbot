@@ -5,4 +5,5 @@ langchain-classic
 langchain-openai
 langchain-community
 sentence-transformers
-faiss-cpu 
+faiss-cpu
+duckduckgo-search 
