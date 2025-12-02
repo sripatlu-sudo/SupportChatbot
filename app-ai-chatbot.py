@@ -6,133 +6,140 @@ from openai import OpenAI
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
 from langchain_openai import ChatOpenAI
+from duckduckgo_search import DDGS   # <-- DuckDuckGo web search
 
-# -------------------------------
-# PAGE CONFIG — BLACK & WHITE THEME
-# -------------------------------
-st.set_page_config(
-    page_title="AI Chatbot",
-    page_icon="🤖",
-    layout="wide",
-)
+# -----------------------------------
+# PAGE SETUP — AI TECHNO FEST THEME
+# -----------------------------------
+st.set_page_config(page_title="AI Techno Fest Chatbot", layout="wide")
 
-# -------------------------------
-# BLACK & WHITE THEME STYLING
-# -------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-    .stApp {
-        background-color: #121212;
-        color: #f5f5f5;
-        font-family: 'Roboto', sans-serif;
+    /* -----------------------------------------
+       🌐 AI TECHNO FEST — FUTURISTIC THEME
+       Neon Lights • Dark Mode • Cyber Grid Glow
+    ----------------------------------------- */
+
+    body, .stApp {
+        background: radial-gradient(circle at 20% 20%, #0b0f17, #02040a 80%);
+        font-family: "Orbitron", "Segoe UI", sans-serif;
+        color: #E2E8F0;
     }
 
-    header {visibility: hidden;}
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    /* Title & Subtitle */
-    .bw-title {
+    /* --- TITLE --- */
+    .spectrum-title {
         text-align: center;
-        font-size: 40px;
+        font-size: 42px;
         font-weight: 700;
-        color: #ffffff;
-        text-shadow: 0 0 12px #ffffff44, 0 0 24px #ffffff22;
-        margin-top: -40px;
-        margin-bottom: 5px;
+        margin-top: -10px;
+        color: #00E5FF;
+        letter-spacing: 2px;
+        text-shadow:
+            0 0 8px #00E5FF,
+            0 0 20px rgba(0,229,255,0.7);
     }
 
-    .bw-subtitle {
+    .spectrum-subtitle {
         text-align: center;
-        font-size: 18px;
-        color: #b0b0b0;
         margin-bottom: 25px;
+        font-size: 18px;
+        color: #10F0FF;
+        text-shadow: 0 0 6px rgba(16,240,255,0.7);
     }
 
-    /* Chat bubbles with halo effect */
+    /* --- CHAT BUBBLES --- */
     .chat-bubble-user {
         padding: 14px;
-        background-color: #1e1e1e;
-        border-left: 5px solid #ffffff;
+        background: rgba(0, 150, 255, 0.08);
+        border-left: 5px solid #00A8FF;
         border-radius: 12px;
         margin-bottom: 10px;
-        color: #f5f5f5;
-        box-shadow: 0 0 10px #ffffff44;
+        color: #7DD3FC;
+        backdrop-filter: blur(6px);
+        box-shadow:
+            0 0 10px rgba(0,168,255,0.3),
+            inset 0 0 10px rgba(0,168,255,0.1);
     }
 
     .chat-bubble-bot {
         padding: 14px;
-        background-color: #2c2c2c;
-        border-left: 5px solid #b0b0b0;
+        background: rgba(0,255,180,0.07);
+        border-left: 5px solid #00FFC6;
         border-radius: 12px;
         margin-bottom: 20px;
-        color: #e0e0e0;
-        box-shadow: 0 0 10px #b0b0b044;
+        color: #99F6E4;
+        backdrop-filter: blur(6px);
+        box-shadow:
+            0 0 10px rgba(0,255,198,0.3),
+            inset 0 0 10px rgba(0,255,198,0.1);
     }
 
-    /* Disclaimer box */
-    .disclaimer-box {
-        background-color: #1a1a1a;
-        border-left: 4px solid #777777;
-        padding: 12px;
-        margin-bottom: 15px;
-        border-radius: 6px;
-        color: #cccccc;
-    }
-
-    /* Input and checkbox halo */
-    .stTextInput>div>div>input {
-        background-color: #1e1e1e !important;
-        color: #f5f5f5 !important;
-        border: 1px solid #555555 !important;
-        border-radius: 8px !important;
-        padding: 8px !important;
-        box-shadow: 0 0 12px #ffffff22;
-    }
-
+    /* --- INPUT & BUTTONS --- */
     .stButton>button {
-        background-color: #1e1e1e !important;
-        color: #ffffff !important;
-        border-radius: 8px !important;
-        border: 1px solid #555555 !important;
-        padding: 0.6rem 1.2rem !important;
-        box-shadow: 0 0 12px #ffffff22;
-        font-weight: 500 !important;
+        background-color: #00F2FF !important;
+        color: #001A24 !important;
+        border-radius: 10px !important;
+        padding: 0.6rem 1.3rem !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        border: none !important;
+        box-shadow: 0 0 12px #00F2FF;
     }
-
     .stButton>button:hover {
-        box-shadow: 0 0 20px #ffffff44 !important;
-        border-color: #ffffff !important;
+        background-color: #00C2CC !important;
+        box-shadow: 0 0 18px #00F2FF;
+        transform: scale(1.03);
     }
 
-    .stCheckbox label, .stCheckbox div[data-baseweb] {
-        color: #f5f5f5 !important;
+    .stCheckbox label {
+        color: #9AE6FF !important;
+        font-weight: 600;
+        text-shadow: 0 0 6px rgba(0,255,255,0.5);
     }
 
-    /* Footer */
+    .disclaimer-box {
+        background: rgba(255, 204, 0, 0.07);
+        border-left: 4px solid #FFBB00;
+        padding: 12px;
+        border-radius: 8px;
+        color: #FFEAA7;
+        backdrop-filter: blur(4px);
+    }
+
+    /* --- FOOTER --- */
     .footer {
-        text-align: center;
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background: rgba(0, 15, 25, 0.8);
         padding: 12px 0;
-        border-top: 1px solid #444444;
-        margin-top: 25px;
-        font-size: 14px;
-        color: #b0b0b0;
+        text-align: center;
+        box-shadow: 0 -4px 15px rgba(0,255,255,0.3);
+        border-top: 1px solid rgba(0,255,255,0.3);
+        backdrop-filter: blur(8px);
     }
 
-    .footer img {
-        height: 20px;
-        vertical-align: middle;
-        margin-right: 8px;
-        filter: brightness(0) invert(1); /* white logo */
+    .footer a {
+        font-size: 16px;
+        color: #00E5FF;
+        text-decoration: none;
+        font-weight: 700;
+        text-shadow: 0 0 6px #00E5FF;
     }
+
     </style>
 
-    <div class="bw-title">🤖 AI Chatbot</div>
-    <div class="bw-subtitle">Sleek Black & White AI Experience</div>
+    <div class="spectrum-title">🎧 AI TECHNO FEST CHATBOT</div>
+    <div class="spectrum-subtitle">Neon Intelligence • Cyberpunk Support • Live Web AI</div>
     """,
     unsafe_allow_html=True,
 )
+
 
 # -------------------------
 # DISCLAIMER WIDGET
@@ -141,17 +148,19 @@ with st.expander("⚠️ Disclaimer"):
     st.markdown(
         """
         <div class="disclaimer-box">
-        This AI chatbot is a demonstration tool. Responses may not always be accurate.  
-        Avoid using this tool for legal, financial, or sensitive decisions.
+        This chatbot uses AI + web search for assistance.  
+        Responses may be incomplete or inaccurate.  
+        Do not rely on this system for legal, medical, or financial decisions.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-# -------------------------
-# OPENAI / RAG SETUP
-# -------------------------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  
+
+# -----------------------------------
+# RAG + GPT INITIALIZATION
+# -----------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
 def init_chain():
@@ -184,66 +193,107 @@ chain = init_chain()
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# -------------------------
-# CHAT INPUT
-# -------------------------
-st.write("")  # spacing
-input_col1, input_col2 = st.columns([0.82, 0.18])
 
-with input_col1:
-    question = st.chat_input("💬 Ask your AI...")
+# -----------------------------------
+# DUCKDUCKGO SEARCH FUNCTION
+# -----------------------------------
+def duckduckgo_search(query, max_results=5):
+    with DDGS() as ddgs:
+        return list(ddgs.text(query, max_results=max_results))
 
-with input_col2:
+
+# -----------------------------------
+# CHAT INPUT + WEB SEARCH TOGGLE
+# -----------------------------------
+st.write("")
+col1, col2 = st.columns([0.82, 0.18])
+
+with col1:
+    question = st.chat_input("💬 Ask me anything...")
+
+with col2:
     search_web = st.checkbox("🔍 Search web")
 
-# -------------------------
-# HANDLE QUESTION
-# -------------------------
+
+# -----------------------------------
+# PROCESS USER QUESTION
+# -----------------------------------
 if question:
-    with st.spinner("⚡ Processing your query..."):
+    with st.spinner("⚡ Running AI engines..."):
+
         if search_web:
+            # ----- DUCKDUCKGO SEARCH -----
+            results = duckduckgo_search(question, max_results=5)
+
+            st.markdown("### 🌐 DuckDuckGo Results (Live)")
+            for r in results:
+                st.write(f"**{r.get('title','')}**")
+                st.write(r.get("body", ""))
+                st.write("---")
+
+            # Generate LLM Answer
+            combined = "\n".join(
+                [f"{r.get('title','')}: {r.get('body','')}" for r in results]
+            )
+
+            prompt = f"""
+            You are an AI assistant answering using LIVE web results.
+
+            WEB SEARCH RESULTS:
+            {combined}
+
+            USER QUESTION:
+            {question}
+
+            Provide the best possible answer.
+            """
+
             llm = ChatOpenAI(
                 model_name="gpt-4",
                 temperature=0.2,
                 openai_api_key=OPENAI_API_KEY,
             )
-            response_text = llm.invoke(question).content
+
+            response_text = llm.invoke(prompt).content
+
         else:
-            response = chain(
-                {
-                    "question": question,
-                    "chat_history": st.session_state.history,
-                }
-            )
-            response_text = response["answer"]
+            # ----- VECTOR DB RAG -----
+            result = chain({
+                "question": question,
+                "chat_history": st.session_state.history
+            })
+            response_text = result["answer"]
 
     st.session_state.history.append(
-        (f"{question}  {'(Web Search)' if search_web else '(RAG)'}", response_text)
+        (f"{question}  {'(Web Search)' if search_web else '(RAG)'}",
+         response_text)
     )
 
-# -------------------------
-# DISPLAY CHAT
-# -------------------------
-for user, bot in reversed(st.session_state.history):
+
+# -----------------------------------
+# CHAT HISTORY UI — NEON STYLE
+# -----------------------------------
+for user_msg, bot_msg in reversed(st.session_state.history):
     st.markdown(
-        f"<div class='chat-bubble-user'><b>You:</b> {user}</div>",
+        f"<div class='chat-bubble-user'><b>You:</b> {user_msg}</div>",
         unsafe_allow_html=True
     )
     st.markdown(
-        f"<div class='chat-bubble-bot'><b>AI:</b> {bot}</div>",
+        f"<div class='chat-bubble-bot'><b>AI:</b> {bot_msg}</div>",
         unsafe_allow_html=True
     )
 
-# -------------------------
-# FOOTER WITH SPECTRUM LINK
-# -------------------------
+
+# -----------------------------------
+# FOOTER — CYBERPUNK STYLE
+# -----------------------------------
 st.markdown(
     """
     <div class="footer">
-        <a href="https://www.spectrum.com" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/Spectrum_logo_2017.svg" alt="Spectrum Logo">
-            spectrum.com
-        </a>
+        <div class="main-block">
+            🔥 AI Techno Fest • Powered by GPT-4 + DuckDuckGo •
+            <a href="https://www.ai-chatbot.com" target="_blank">ai-chatbot.com</a>
+        </div>
     </div>
     """,
     unsafe_allow_html=True
