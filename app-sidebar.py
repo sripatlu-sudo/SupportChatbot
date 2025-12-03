@@ -195,7 +195,7 @@ with st.sidebar:
 
     if st.button("🗑 Clear History"):
         st.session_state.history = []
-        st.experimental_rerun()
+        #st.experimental_rerun()
 
 if "selected_history" in st.session_state:
     q, a = st.session_state.selected_history
@@ -256,3 +256,15 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+#-------------------------------------------#
+#----Proposed enhancements & next steps-----#
+# Implement prompt engg. concepts
+# Switch to from local vertor db to vectorize.io 
+# Add more documents to db
+# Theme enhancements
+# Use A-Q for code optimization / testing ideas / documentation
+# Compile evaluation dataset / perform evaluation & fine tuning (better models?)
+# Another version for internal / HLD documents with image look-up capability - openai/CLIP
+# Other ideas....
+# Prepare slide deck
