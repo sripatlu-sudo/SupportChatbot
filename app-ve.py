@@ -256,7 +256,7 @@ st.markdown(
 # Add more documents to db
 # Theme enhancements
 # Use A-Q for code optimization / testing ideas / documentation
-# Compile evaluation questions / perform evaluation & fine tuning (better models?)
+# Compile evaluation dataset / perform evaluation & fine tuning (better models?)
 # Another version for internal / HLD documents with image look-up capability - openai/CLIP
 # Other ideas....
 # Prepare slide deck
