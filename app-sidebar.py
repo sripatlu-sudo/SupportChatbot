@@ -98,7 +98,7 @@ st.markdown(
     }
 
     .stCheckbox label {
-        color: #333333 !important;
+        color: #000000 !important;
         font-weight: 500;
     }
 
@@ -134,7 +134,7 @@ st.markdown(
 # -------------------------
 # DISCLAIMER WIDGET
 # -------------------------
-with st.expander("⚠️ AI Model Disclaimer"):
+with st.expander("⚠️ Disclaimer"):
     st.markdown(
         """
         <div class="disclaimer-box">
@@ -208,13 +208,13 @@ if "selected_history" in st.session_state:
 input_col1, input_col2 = st.columns([0.82, 0.18])
 
 with input_col1:
-    question = st.chat_input("💬 Enter your message...")
+    question = st.chat_input("💬 How can I help you?")
 
 with input_col2:
     search_web = st.checkbox("🌐 Web Search")
 
 if question:
-    with st.spinner("💠 Processing holographic query..."):
+    with st.spinner("💠 Thinking..."):
 
         if search_web:
             llm = ChatOpenAI(
@@ -249,8 +249,6 @@ st.markdown(
     <div class="footer">
         <div class="main-block call-box">
         📞 Need more help? Call: <b><a href="tel:(833) 224-6603">833-677-8890</a></b>
-        <img src="" />
-        <a href="https://www.ai-chatbot.com" target="_blank">ai-chatbot.com</a>
         </div>
     </div>
     """,
