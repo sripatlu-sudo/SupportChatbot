@@ -161,7 +161,7 @@ def init_chain():
     retriever = vectordb.as_retriever(search_kwargs={"k": 8})
 
     llm = ChatOpenAI(
-        model_name="gpt-5",
+        model_name="gpt-4",
         temperature=0.1,
         openai_api_key=OPENAI_API_KEY
     )
