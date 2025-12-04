@@ -1,12 +1,9 @@
 import os
 import pathlib, streamlit as st
-from langchain_classic.vectorstores import FAISS
-from langchain_classic.embeddings import HuggingFaceEmbeddings
-#from langchain_classic.llms import Ollama
 from openai import OpenAI
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI, OpenAIVectorStore
 from langchain_classic.chains import ConversationalRetrievalChain
 from langchain_classic.memory import ConversationBufferMemory
-from langchain_openai import ChatOpenAI
 
 # -----------------------------------
 # PAGE SETUP — AI TECHNO FEST THEME
@@ -68,11 +65,11 @@ st.markdown(
     }
 
     .disclaimer-box {
-    background: rgba(255, 255, 255, 0.05);
-    border-left: 4px solid #ffdd00;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid #ffdd00;
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 6px;
     }
 
     </style>
@@ -89,27 +86,33 @@ st.markdown(
 with st.expander("⚠️ Disclaimer"):
     st.markdown("""
     <div class="disclaimer-box">
-    This chatbot is an AI assistant built for demonstration at the AI Techno Fest.**  
+    This chatbot is an AI assistant built for demonstration at the AI Techno Fest.  
     Responses may be inaccurate or incomplete.  
     Do not use this tool for legal, financial or sensitive personal decisions.
     </div>
     """, unsafe_allow_html=True)
 
-# -----------------------------------
-# ORIGINAL LOGIC — UNCHANGED
-# -----------------------------------
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  
+# ------------------------------------------------
+# SWITCHED: FAISS → OPENAI VECTOR STORE
+# ------------------------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 @st.cache_resource
 def init_chain():
-    vectordb = FAISS.load_local(
-        "faiss_index",
-        HuggingFaceEmbeddings(model_name="thenlper/gte-small"),
-        allow_dangerous_deserialization=True,
+
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+    # Load or create OpenAI Vector Store
+    # Assumes you already uploaded documents to OpenAI Vector Store separately
+    vector_store = OpenAIVectorStore(
+        embedding=embeddings,
+        collection_name="UserDocs"  # your vector DB name
     )
-    retriever = vectordb.as_retriever(search_kwargs={"k": 8})
+
+    retriever = vector_store.as_retriever(search_kwargs={"k": 8})
 
     llm = ChatOpenAI(
-        model_name="gpt-4",
+        model="gpt-4.1",
         temperature=0.1,
         openai_api_key=OPENAI_API_KEY
     )
@@ -131,18 +134,16 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # -----------------------------------
-# CHAT INPUT (same logic, themed UI)
+# CHAT INPUT
 # -----------------------------------
 question = st.chat_input("💬 How can we help you?")
 
 if question:
     with st.spinner("⚡ Processing with AI Techno Core..."):
-        response = chain(
-            {
-                "question": question,
-                "chat_history": st.session_state.history,
-            }
-        )
+        response = chain({
+            "question": question,
+            "chat_history": st.session_state.history,
+        })
     st.session_state.history.append((question, response["answer"]))
 
 # ------------------------------

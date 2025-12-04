@@ -6,4 +6,5 @@ langchain-openai
 langchain-community
 sentence-transformers
 faiss-cpu
-duckduckgo-search 
+duckduckgo-search
+langchain-openai 
