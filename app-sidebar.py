@@ -170,9 +170,13 @@ def init_chain():
         memory_key="chat_history",
         return_messages=True
     )
+    return ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)
 
+chain = init_chain()
+
+def chat_response(query):
     client = OpenAI(api_key=OPENAI_API_KEY)
-    query = "What's Deep Research?"
+    #query = "What's Deep Research?"
     response = client.responses.create(
     input= query,
     model="gpt-4o-mini",
@@ -182,9 +186,8 @@ def init_chain():
     }]
     )
     return response
-    #return ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)
 
-chain = init_chain()
+
 
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -235,10 +238,7 @@ if question:
             )
             response_text = llm.invoke(question).content
         else:
-            response = chain({
-                "question": question,
-                "chat_history": st.session_state.history,
-            })
+            response = chat_response(question)
             response_text = response["answer"]
 
     st.session_state.history.append(
