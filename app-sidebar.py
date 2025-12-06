@@ -158,7 +158,7 @@ def chat_response(query):
     #query = "What's Deep Research?"
     response = client.responses.create(
     input= query,
-    model="gpt-4o-mini",
+    model="gpt-4",
     tools=[{
         "type": "file_search",
         "vector_store_ids": ['vs_69318ea1dd0c8191bd8bf5f7131fa9dc'],
