@@ -243,7 +243,7 @@ if question:
             #response_text = response["answer"]
 
     st.session_state.history.append(
-        (f"{question} {'(Web Search)' if search_web else '(RAG)'}", response_text)
+        (f"{question} {'(Web Search)' if search_web else '(RAG)'}", response)
     )
 
 # -----------------------------------
