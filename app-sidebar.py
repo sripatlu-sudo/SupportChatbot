@@ -239,7 +239,8 @@ if question:
             response_text = llm.invoke(question).content
         else:
             response = chat_response(question)
-            response_text = response["answer"]
+            print(response.text)
+            #response_text = response["answer"]
 
     st.session_state.history.append(
         (f"{question} {'(Web Search)' if search_web else '(RAG)'}", response_text)
