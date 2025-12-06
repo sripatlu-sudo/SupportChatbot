@@ -1,6 +1,6 @@
 import os
 import pathlib, streamlit as st
-from langchain_classic.vectorstores import FAISS
+#from langchain_classic.vectorstores import FAISS
 from langchain_classic.embeddings import HuggingFaceEmbeddings
 from openai import OpenAI
 from langchain_classic.chains import ConversationalRetrievalChain
@@ -152,27 +152,6 @@ with st.expander("⚠️ Disclaimer"):
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 @st.cache_resource
-def init_chain():
-    vectordb = FAISS.load_local(
-        "faiss_index",
-        HuggingFaceEmbeddings(model_name="thenlper/gte-small"),
-        allow_dangerous_deserialization=True,
-    )
-    retriever = vectordb.as_retriever(search_kwargs={"k": 8})
-
-    llm = ChatOpenAI(
-        model_name="gpt-4",
-        temperature=0.1,
-        openai_api_key=OPENAI_API_KEY
-    )
-
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        return_messages=True
-    )
-    return ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)
-
-chain = init_chain()
 
 def chat_response(query):
     client = OpenAI(api_key=OPENAI_API_KEY)
