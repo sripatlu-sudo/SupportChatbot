@@ -123,7 +123,7 @@ st.markdown(
 
     </style>
 
-    <div class="amazon-title">⚡ Customer Support Chatbot</div>
+    <div class="amazon-title">⚡Customer Support Chatbot</div>
     <div class="amazon-subtitle">Your Trusted AI Assistant</div>
     """,
     unsafe_allow_html=True
@@ -171,7 +171,18 @@ def init_chain():
         return_messages=True
     )
 
-    return ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    query = "What's Deep Research?"
+    response = client.responses.create(
+    input= query,
+    model="gpt-4o-mini",
+    tools=[{
+        "type": "file_search",
+        "vector_store_ids": ['vs_69318ea1dd0c8191bd8bf5f7131fa9dc'],
+    }]
+    )
+    return response
+    #return ConversationalRetrievalChain.from_llm(llm=llm, retriever=retriever, memory=memory)
 
 chain = init_chain()
 
@@ -264,5 +275,5 @@ st.markdown(
 # Use A-Q for code optimization / testing ideas / documentation
 # Compile evaluation dataset / perform evaluation & fine tuning (better models?)
 # Another version for internal / HLD documents with image look-up capability - openai/CLIP
-# Other ideas....
+# Other ideas....Add audio based search
 # Prepare slide deck
