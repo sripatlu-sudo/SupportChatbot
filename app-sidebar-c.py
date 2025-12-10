@@ -79,6 +79,18 @@ body, .stApp {
     font-weight: 600;
 }
 
+.stCheckbox > label > div {
+    color: #FFFFFF !important;
+}
+
+.stCheckbox span {
+    color: #FFFFFF !important;
+}
+
+[data-testid="stCheckbox"] label {
+    color: #FFFFFF !important;
+}
+
 .stButton>button {
     background: linear-gradient(135deg, #8B4513, #A0522D) !important;
     color: #FFD700 !important;
