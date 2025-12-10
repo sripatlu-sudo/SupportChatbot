@@ -25,9 +25,9 @@ st.markdown(
 
     body, .stApp {
         background: linear-gradient(135deg, 
-            rgba(25, 42, 86, 0.95) 0%, 
-            rgba(139, 69, 19, 0.85) 50%, 
-            rgba(25, 42, 86, 0.95) 100%),
+            rgba(25, 42, 86, 0.7) 0%, 
+            rgba(139, 69, 19, 0.6) 50%, 
+            rgba(25, 42, 86, 0.7) 100%),
             url("https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
@@ -124,7 +124,7 @@ st.markdown(
     }
 
     .stCheckbox label {
-        color: #FFD700 !important;
+        color: #FFFFFF !important;
         font-weight: 600;
     }
 
@@ -209,17 +209,37 @@ with st.expander("⚠️ Disclaimer"):
 # -----------------------------------
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Prompt template for context management
+COLLEGE_ADVISOR_PROMPT = """
+You are an expert college admissions advisor with deep knowledge of higher education. 
+Your role is to provide accurate, helpful guidance on college selection, admissions processes, and academic planning.
+
+Context Guidelines:
+- Answer ONLY based on the provided document context
+- If information is not in the context, say "I don't have specific information about that in my knowledge base"
+- Focus on college admissions, academic programs, and student success
+- Provide actionable advice when possible
+- Be encouraging and supportive in your tone
+
+User Question: {query}
+
+Please provide a comprehensive response based on the available information.
+"""
+
 @st.cache_resource
 def chat_response(query):
     client = OpenAI(api_key=OPENAI_API_KEY)
-    #query = "What's Deep Research?"
+    
+    # Format query with prompt template
+    formatted_query = COLLEGE_ADVISOR_PROMPT.format(query=query)
+    
     response = client.responses.create(
-    input= query,
-    model="gpt-4o-mini",
-    tools=[{
-        "type": "file_search",
-        "vector_store_ids": ['vs_69347f971e348191b597c0bb6b20de9e'],
-    }]
+        input=formatted_query,
+        model="gpt-4o-mini",
+        tools=[{
+            "type": "file_search",
+            "vector_store_ids": ['vs_69347f971e348191b597c0bb6b20de9e'],
+        }]
     )
     return response
 
