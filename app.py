@@ -35,13 +35,13 @@ def init_chain():
     )
     
     prompt = PromptTemplate(
-        template="""You are a customer support assistant. Answer questions ONLY based on the provided context. If the answer is not in the context, say "I don't have information about that in my knowledge base."
+        template="""You are a customer support assistant. Answer questions ONLY based on the provided context. Provide detailed responses and be courteous. If the answer is not in the context, say "I don't have information about that in my knowledge base."
 
-Context: {context}
+    Context: {context}
 
-Question: {question}
+    Question: {question}
 
-Answer:""",
+    Answer:""",
         input_variables=["context", "question"]
     )
     
@@ -59,6 +59,8 @@ if "feedback" not in st.session_state:
     st.session_state.feedback = {}
 if "selected_msg" not in st.session_state:
     st.session_state.selected_msg = None
+if "last_question" not in st.session_state:
+    st.session_state.last_question = None
 
 
 # Initialize chain
@@ -68,18 +70,17 @@ with st.expander("⚠️ Disclaimer"):
     st.warning("This chatbot is an AI assistant built for demonstration. Responses may be inaccurate. Do not use for legal, financial or sensitive decisions.")
 
 if question := st.chat_input("💬 How may we assist you today?"):
-    st.session_state.messages.append({"role": "user", "content": question})
-    with st.chat_message("user"):
-        st.write(question)
-    
-    with st.chat_message("assistant"):
+    if question != st.session_state.last_question:
+        st.session_state.last_question = question
+        st.session_state.messages.append({"role": "user", "content": question})
+        
         with st.spinner("Processing your request..."):
             response = chain({"question": question, "chat_history": [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]})
-        st.write(response["answer"])
-    
-    st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
-    if len(st.session_state.messages) > 20:
-        st.session_state.messages = st.session_state.messages[-20:]
+        
+        st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+        if len(st.session_state.messages) > 20:
+            st.session_state.messages = st.session_state.messages[-20:]
+        st.rerun()
 
 
 # Sidebar for chat history

@@ -8,151 +8,183 @@ from langchain_classic.memory import ConversationBufferMemory
 from langchain_openai import ChatOpenAI
 
 # -----------------------------------
-# PAGE SETUP — BLUE HOLOGRAM MATRIX THEME
+# PAGE SETUP — ELITE COLLEGE THEME
 # -----------------------------------
-st.set_page_config(page_title="Hologram AI Chatbot", layout="wide")
+st.set_page_config(page_title="🎓 Elite College Advisor", layout="wide")
 
 st.markdown(
     """
     <style>
 
     /* -----------------------------------------
-       COLLEGE ADMISSIONS BROCHURE THEME
-       Clean • Elegant • Academic
+       ELITE COLLEGE ADMISSIONS THEME
+       Sophisticated • Prestigious • Academic Excellence
        ----------------------------------------- */
 
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
     body, .stApp {
-        background-image: url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b");
+        background: linear-gradient(135deg, 
+            rgba(25, 42, 86, 0.95) 0%, 
+            rgba(139, 69, 19, 0.85) 50%, 
+            rgba(25, 42, 86, 0.95) 100%),
+            url("https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        font-family: "Georgia", "Merriweather", serif;
-        color: #1D1A1A;
+        font-family: "Crimson Text", "Times New Roman", serif;
+        color: #F8F6F0;
     }
 
-    /* Overlay for readability */
+    /* Elegant overlay with subtle texture */
     .stApp::before {
         content: "";
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: rgba(255, 255, 255, 0.60);
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(255,215,0,0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
         z-index: -1;
     }
 
-    /* Main Title */
+    /* Prestigious Title */
     .college-title {
         text-align: center;
-        font-size: 42px;
+        font-size: 48px;
         font-weight: 700;
         margin-top: -10px;
-        color: #00274C; /* University Navy Blue */
-        font-family: "Merriweather", serif;
-        letter-spacing: 1px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+        color: #FFD700; /* Elegant Gold */
+        font-family: "Playfair Display", serif;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .college-subtitle {
         text-align: center;
-        color: #4A4A4A;
-        font-size: 18px;
-        margin-bottom: 30px;
-        font-family: "Georgia";
+        color: #E6E6FA;
+        font-size: 20px;
+        margin-bottom: 35px;
+        font-family: "Crimson Text", serif;
+        font-style: italic;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
 
-    /* Chat Bubbles — Brochure Style */
+    /* Elegant Chat Bubbles */
     .chat-bubble-user {
-        padding: 16px;
-        background: #F7F9FC;
-        border-left: 5px solid #00274C;
-        border-radius: 12px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(25, 42, 86, 0.9), rgba(25, 42, 86, 0.7));
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-left: 4px solid #FFD700;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         font-size: 16px;
+        color: #F8F6F0;
+        backdrop-filter: blur(10px);
     }
 
     .chat-bubble-bot {
-        padding: 16px;
-        background: #FFFFFF;
-        border-left: 5px solid #FFCB05; /* University Gold */
-        border-radius: 12px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(139, 69, 19, 0.9), rgba(139, 69, 19, 0.7));
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-left: 4px solid #CD853F;
+        border-radius: 15px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         font-size: 16px;
+        color: #F8F6F0;
+        backdrop-filter: blur(10px);
     }
 
-    /* Disclaimer box */
+    /* Elegant Disclaimer */
     .disclaimer-box {
-        background: #FFF4D9;
-        border-left: 4px solid #FFCB05;
-        padding: 12px;
-        border-radius: 6px;
-        color: #5A4A3B;
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        border-left: 4px solid #FFD700;
+        padding: 16px;
+        border-radius: 10px;
+        color: #F8F6F0;
         font-size: 15px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
 
     /* Inputs */
     .stTextInput>div>div>input {
         border-radius: 8px;
-        border: 1px solid #A2A2A2;
-        background: rgba(255,255,255,0.75);
-        font-family: "Georgia";
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        background: rgba(255,255,255,0.1);
+        font-family: "Crimson Text";
+        color: #F8F6F0;
     }
 
     .stCheckbox label {
-        color: #00274C !important;
+        color: #FFD700 !important;
         font-weight: 600;
     }
 
-    /* Buttons — Classic Academic Look */
+    /* Premium Buttons */
     .stButton>button {
-        background-color: #00274C !important;
-        color: #FFFFFF !important;
-        border-radius: 10px !important;
-        padding: 0.7rem 1.3rem !important;
-        border: none !important;
+        background: linear-gradient(135deg, #8B4513, #A0522D) !important;
+        color: #FFD700 !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 0.8rem 1.5rem !important;
         font-size: 1rem !important;
         font-weight: 600 !important;
-        font-family: "Merriweather", serif;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+        font-family: "Playfair Display", serif !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        transition: all 0.3s ease !important;
     }
 
     .stButton>button:hover {
-        background-color: #013a73 !important;
+        background: linear-gradient(135deg, #A0522D, #CD853F) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
     }
 
-    /* History Sidebar */
+    /* Elegant Sidebar */
     .sidebar-title {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
-        color: #00274C;
-        font-family: "Merriweather", serif;
+        color: #FFD700;
+        font-family: "Playfair Display", serif;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        margin-bottom: 20px;
     }
 
-    /* Footer */
+    /* Sophisticated Footer */
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background: #00274C;
-        padding: 12px 0;
+        background: linear-gradient(135deg, rgba(25, 42, 86, 0.95), rgba(139, 69, 19, 0.95));
+        padding: 15px 0;
         text-align: center;
-        box-shadow: 0 -2px 6px rgba(0,0,0,0.15);
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 215, 0, 0.3);
     }
 
     .footer a {
-        font-size: 16px;
-        color: #FFCB05;
-        font-family: "Georgia";
+        font-size: 17px;
+        color: #FFD700;
+        font-family: "Playfair Display", serif;
         font-weight: 600;
         text-decoration: none;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
 
     </style>
 
-    <div class="college-title">🎓 College Picker Chatbot</div>
-    <div class="college-subtitle">Your Admissions Information Assistant</div>
+    <div class="college-title">🏛️ Elite College Advisor</div>
+    <div class="college-subtitle">Your Gateway to Academic Excellence</div>
     """,
     unsafe_allow_html=True
 )
@@ -197,10 +229,10 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # -----------------------------------
-# SIDEBAR — HOLOGRAM HISTORY PANEL
+# SIDEBAR — ELEGANT HISTORY PANEL
 # -----------------------------------
 with st.sidebar:
-    st.markdown("<div class='sidebar-title'>💠 Chat History</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-title'>📚 Chat History</div>", unsafe_allow_html=True)
 
     if len(st.session_state.history) == 0:
         st.caption("No conversations yet.")
@@ -232,7 +264,7 @@ with input_col2:
     search_web = st.checkbox("🌐 Web Search")
 
 if question:
-    with st.spinner("💠 Thinking..."):
+    with st.spinner("🎓 Thinking..."):
         if search_web:
             llm = ChatOpenAI(
                 model_name="gpt-4",
