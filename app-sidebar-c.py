@@ -25,13 +25,9 @@ st.markdown(
 
     body, .stApp {
         background: linear-gradient(135deg, 
-            rgba(25, 42, 86, 0.7) 0%, 
-            rgba(139, 69, 19, 0.6) 50%, 
-            rgba(25, 42, 86, 0.7) 100%),
-            url("https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
+            #192A56 0%, 
+            #8B4513 50%, 
+            #192A56 100%);
         font-family: "Crimson Text", "Times New Roman", serif;
         color: #F8F6F0;
     }
