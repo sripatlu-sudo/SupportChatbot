@@ -249,8 +249,7 @@ with st.sidebar:
     )
     
     if uploaded_file and st.button("📤 Add to Knowledge Base"):
-        with st.spinner("Uploading to knowledge base..."):
-            result = upload_to_vector_store(uploaded_file, uploaded_file.name)
+        result = upload_to_vector_store(uploaded_file, uploaded_file.name)
         st.success(result) if "Successfully" in result else st.error(result)
     
     st.markdown("---")
