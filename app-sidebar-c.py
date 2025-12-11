@@ -302,7 +302,7 @@ for user, bot in reversed(st.session_state.history):
 st.markdown("""
 <div class="footer">
     <div class="main-block call-box">
-    📞 Need more help? Call: <b><a href="tel:(833) 224-6603">833-677-8890</a></b>
+    📞 Need more help? Call: <b><a href="tel:(800) 265-5343">1-800-COLLEGE</a></b>
     </div>
 </div>
 """, unsafe_allow_html=True)
