@@ -183,6 +183,7 @@ Please provide a comprehensive response based on the available information.
 def get_openai_client():
     return OpenAI(api_key=OPENAI_API_KEY)
 
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def chat_response(query):
     try:
         client = get_openai_client()
@@ -200,6 +201,7 @@ def chat_response(query):
     except Exception as e:
         return f"Error: {str(e)}"
 
+@st.cache_data(ttl=1800)  # Cache for 30 minutes
 def web_search_response(query):
     try:
         llm = ChatOpenAI(
@@ -211,8 +213,42 @@ def web_search_response(query):
     except Exception as e:
         return f"Error: {str(e)}"
 
+def upload_to_vector_store(file_content, filename):
+    try:
+        client = get_openai_client()
+        
+        # Create file
+        file_obj = client.files.create(
+            file=file_content,
+            purpose="assistants"
+        )
+        
+        # Add to vector store
+        client.beta.vector_stores.files.create(
+            vector_store_id="vs_69347f971e348191b597c0bb6b20de9e",
+            file_id=file_obj.id
+        )
+        
+        return f"Successfully uploaded {filename} to knowledge base!"
+    except Exception as e:
+        return f"Error uploading file: {str(e)}"
+
 # Sidebar
 with st.sidebar:
+    st.markdown("<div class='sidebar-title'>📄 Upload Documents</div>", unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader(
+        "Upload college documents",
+        type=['pdf', 'txt', 'docx'],
+        help="Upload college guides, requirements, or other helpful documents"
+    )
+    
+    if uploaded_file and st.button("📤 Add to Knowledge Base"):
+        with st.spinner("Uploading to knowledge base..."):
+            result = upload_to_vector_store(uploaded_file, uploaded_file.name)
+        st.success(result) if "Successfully" in result else st.error(result)
+    
+    st.markdown("---")
     st.markdown("<div class='sidebar-title'>📚 Chat History</div>", unsafe_allow_html=True)
     
     if len(st.session_state.history) == 0:
