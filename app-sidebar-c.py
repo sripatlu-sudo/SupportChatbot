@@ -165,6 +165,8 @@ if "history" not in st.session_state:
     st.session_state.history = []
 if "processing" not in st.session_state:
     st.session_state.processing = False
+if "selected_history" not in st.session_state:
+    st.session_state.selected_history = None
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -260,7 +262,7 @@ with st.sidebar:
     else:
         for idx, (q, a) in enumerate(st.session_state.history[-10:]):  # Show last 10
             if st.button(f"💬 {q[:36]}...", key=f"hist_{idx}"):
-                st.info(f"**Past Query:** {q}\n\n**Response:** {a}")
+                st.session_state.selected_history = (q, a)
     
     st.markdown("---")
     if st.button("🗑 Clear History"):
@@ -296,6 +298,14 @@ if question and not st.session_state.processing:
     
     st.session_state.processing = False
     st.rerun()
+
+# Display selected history details
+if st.session_state.selected_history:
+    q, a = st.session_state.selected_history
+    st.info(f"**Past Query:** {q}\n\n**Response:** {a}")
+    if st.button("❌ Close Details"):
+        st.session_state.selected_history = None
+        st.rerun()
 
 # Display chat
 for user, bot in reversed(st.session_state.history):
