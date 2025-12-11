@@ -224,7 +224,7 @@ def upload_to_vector_store(file_content, filename):
         )
         
         # Add to vector store
-        client.beta.vector_stores.files.create(
+        client.vector_stores.files.create(
             vector_store_id="vs_69347f971e348191b597c0bb6b20de9e",
             file_id=file_obj.id
         )
