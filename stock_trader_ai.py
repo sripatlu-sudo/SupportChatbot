@@ -101,7 +101,7 @@ def get_ai_analysis(symbol, current_price, signal, reason):
         """
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=100
         )
