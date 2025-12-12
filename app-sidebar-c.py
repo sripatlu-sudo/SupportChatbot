@@ -184,7 +184,7 @@ Context Guidelines:
 - Focus on college admissions, academic programs, and student success
 - Provide actionable advice when possible
 - Be encouraging and supportive in your tone
-- Remove any html tags from the context
+- Remove any 
 
 User Question: {query}
 
@@ -203,7 +203,7 @@ def chat_response(query):
         
         response = client.responses.create(
             input=formatted_query,
-            model="gpt-4o-mini",
+            model="gpt-4",
             tools=[{
                 "type": "file_search",
                 "vector_store_ids": ['vs_69347f971e348191b597c0bb6b20de9e'],
