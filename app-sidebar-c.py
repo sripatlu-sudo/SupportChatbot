@@ -210,7 +210,7 @@ def chat_response(query):
         )
         return response.output[1].content[0].text
     except Exception as e:
-        return "I'm having trouble connecting right now. Please try rephrasing your question or try again in a moment! 😊"
+        return "I'm having trouble accessing the information you requested. Please try rephrasing your question! 😊"
 
 @st.cache_data(ttl=1800)  # Cache for 30 minutes
 def web_search_response(query):
