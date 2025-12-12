@@ -145,6 +145,10 @@ body, .stApp {
     text-decoration: none;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
+
+[data-testid="stAlert"] {
+    background-color: lightblue !important;
+}
 </style>
 
 <div class="college-title">🏛️ College Buddy Chatbot</div>
