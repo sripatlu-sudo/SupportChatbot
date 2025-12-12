@@ -152,7 +152,7 @@ body, .stApp {
 </style>
 
 <div class="college-title">🏛️ College Buddy Chatbot</div>
-<div class="college-subtitle">Your college AI assistant</div>
+<div class="college-subtitle">Just relax....your AI assistant is here to help</div>
 """, unsafe_allow_html=True)
 
 with st.expander("⚠️ Disclaimer"):
