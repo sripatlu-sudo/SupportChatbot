@@ -189,7 +189,7 @@ def get_ai_analysis(symbol, current_price, signal, reason):
         """
         
         response = client.chat.completions.create(
-            model="gpt-5.2",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=100
         )
@@ -342,12 +342,6 @@ with col2:
 # Auto-refresh when monitoring (persistent)
 if st.session_state.monitoring:
     time.sleep(10)  # Fixed 10-second refresh for price and rules
-    st.rerun()
-
-# Status indicator
-status_color = "🟢" if st.session_state.monitoring else "🔴"
-st.sidebar.markdown(f"**Status:** {status_color} {'Monitoring' if st.session_state.monitoring else 'Stopped'}")session_state.monitoring:
-    time.sleep(refresh_interval)
     st.rerun()
 
 # Status indicator
