@@ -184,6 +184,7 @@ Context Guidelines:
 - Focus on college admissions, academic programs, and student success
 - Provide actionable advice when possible
 - Be encouraging and supportive in your tone
+- Remove any html tags from the context
 
 User Question: {query}
 
