@@ -6,6 +6,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 from openai import OpenAI
 import os
+# from twilio.rest import Client
 
 st.set_page_config(page_title="Stock Trader AI", layout="wide")
 
@@ -196,6 +197,25 @@ def get_ai_analysis(symbol, current_price, signal, reason):
     except:
         return "AI analysis unavailable"
 
+# def send_sms_alert(phone_number, message):
+#     try:
+#         # Twilio credentials (set as environment variables)
+#         account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+#         auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+#         from_number = os.getenv('TWILIO_PHONE_NUMBER')
+#         
+#         if account_sid and auth_token and from_number:
+#             client = Client(account_sid, auth_token)
+#             client.messages.create(
+#                 body=message,
+#                 from_=from_number,
+#                 to=phone_number
+#             )
+#             return True
+#     except:
+#         pass
+#     return False
+
 # Sidebar controls
 with st.sidebar:
     st.subheader("🎯 Trading Setup")
@@ -203,7 +223,9 @@ with st.sidebar:
     symbols = st.text_input("Stock Symbols (comma-separated)", "AAPL,GOOGL,MSFT, NVDA, MU, ORCL, CHTR").upper().split(',')
     symbols = [s.strip() for s in symbols if s.strip()]
     
-    refresh_interval = st.slider("Refresh Interval (seconds)", 10, 300, 60)
+    # phone_number = st.text_input("📱 Phone Number (for SMS alerts)", placeholder="+1234567890")
+    
+    refresh_interval = st.slider("Refresh Interval (seconds)", 10, 28800, 10)  # Default 10 seconds
     
     if st.button("🚀 Start Monitoring"):
         st.session_state.monitoring = True
@@ -290,6 +312,11 @@ with col1:
                         # Add to alerts if not duplicate
                         if not any(a['symbol'] == symbol and a['signal'] == signal for a in st.session_state.alerts[-5:]):
                             st.session_state.alerts.append(alert)
+                            
+                            # Send SMS alert if phone number provided
+                            # if phone_number:
+                            #     sms_message = f"🚨 {signal} {symbol} at ${current_price:.2f}\n{reason[:100]}"
+                            #     send_sms_alert(phone_number, sms_message)
                 
                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -314,6 +341,12 @@ with col2:
 
 # Auto-refresh when monitoring (persistent)
 if st.session_state.monitoring:
+    time.sleep(10)  # Fixed 10-second refresh for price and rules
+    st.rerun()
+
+# Status indicator
+status_color = "🟢" if st.session_state.monitoring else "🔴"
+st.sidebar.markdown(f"**Status:** {status_color} {'Monitoring' if st.session_state.monitoring else 'Stopped'}")session_state.monitoring:
     time.sleep(refresh_interval)
     st.rerun()
 
