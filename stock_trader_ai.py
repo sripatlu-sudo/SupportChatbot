@@ -339,11 +339,10 @@ with col2:
     else:
         st.info("No alerts yet. Start monitoring to see trading signals!")
 
-# Auto-refresh when monitoring (persistent)
-if st.session_state.monitoring:
-    time.sleep(10)  # Fixed 10-second refresh for price and rules
-    st.rerun()
-
 # Status indicator
 status_color = "🟢" if st.session_state.monitoring else "🔴"
 st.sidebar.markdown(f"**Status:** {status_color} {'Monitoring' if st.session_state.monitoring else 'Stopped'}")
+
+# Auto-refresh continuously (monitoring persists)
+time.sleep(10)
+st.rerun()
