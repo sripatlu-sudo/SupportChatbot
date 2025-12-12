@@ -39,6 +39,18 @@ st.markdown("""
     border-left: 5px solid #ffc107;
     color: #856404;
 }
+.ticker-blue {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.ticker-green {
+    background-color: #e8f5e8;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,7 +223,7 @@ with col1:
     st.subheader("📊 Live Stock Data")
     
     if symbols:
-        for symbol in symbols:
+        for idx, symbol in enumerate(symbols):
             data_4h, data_1d, data_1h, info = get_stock_data(symbol)
             
             if data_1d is not None and len(data_1d) > 0:
@@ -222,6 +234,11 @@ with col1:
                 # Calculate RSI for display
                 rsi_4h = calculate_rsi(data_4h['Close']) if data_4h is not None and len(data_4h) > 14 else 0
                 rsi_1d = calculate_rsi(data_1d['Close']) if len(data_1d) > 14 else 0
+                
+                # Alternate colors for each ticker
+                color_class = "ticker-blue" if idx % 2 == 0 else "ticker-green"
+                
+                st.markdown(f'<div class="{color_class}">', unsafe_allow_html=True)
                 
                 # Display stock info with RSI
                 col_a, col_b, col_c = st.columns([2, 1, 1])
@@ -273,6 +290,8 @@ with col1:
                         # Add to alerts if not duplicate
                         if not any(a['symbol'] == symbol and a['signal'] == signal for a in st.session_state.alerts[-5:]):
                             st.session_state.alerts.append(alert)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.subheader("🚨 Trading Alerts")
