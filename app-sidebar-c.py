@@ -231,7 +231,7 @@ def upload_to_vector_store(file_content, filename):
         )
         
         # Add to vector store
-        client.vector_stores.files.create(
+        client.beta.vector_stores.files.create(
             vector_store_id="vs_69347f971e348191b597c0bb6b20de9e",
             file_id=file_obj.id
         )
@@ -267,7 +267,6 @@ with st.sidebar:
     st.markdown("---")
     if st.button("🗑 Clear History"):
         st.session_state.history = []
-        st.rerun()
 
 # Chat input
 col1, col2 = st.columns([0.82, 0.18])
@@ -297,7 +296,6 @@ if question and not st.session_state.processing:
         st.session_state.history = st.session_state.history[-50:]
     
     st.session_state.processing = False
-    st.rerun()
 
 # Display selected history details
 if st.session_state.selected_history:
@@ -305,7 +303,6 @@ if st.session_state.selected_history:
     st.info(f"**Past Query:** {q}\n\n**Response:** {a}")
     if st.button("❌ Close Details"):
         st.session_state.selected_history = None
-        st.rerun()
 
 # Display chat
 for user, bot in reversed(st.session_state.history):
