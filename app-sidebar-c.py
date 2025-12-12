@@ -203,7 +203,7 @@ def chat_response(query):
         
         response = client.responses.create(
             input=formatted_query,
-            model="gpt-4",
+            model="gpt-4o",
             tools=[{
                 "type": "file_search",
                 "vector_store_ids": ['vs_69347f971e348191b597c0bb6b20de9e'],
