@@ -46,7 +46,7 @@ def init_chain():
     )
     
     return ConversationalRetrievalChain.from_llm(
-        Ollama(model="gemma3:1b", temperature=0.1),
+        Ollama(model="gemma3:4b", temperature=0.1),
         vectordb.as_retriever(search_kwargs={"k": 8}),
         memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True),
         combine_docs_chain_kwargs={"prompt": prompt}
