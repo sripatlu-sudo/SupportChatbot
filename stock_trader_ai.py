@@ -48,7 +48,7 @@ st.markdown('<div class="main-title">📈 Stock Trader AI Agent</div>', unsafe_a
 if 'alerts' not in st.session_state:
     st.session_state.alerts = []
 if 'monitoring' not in st.session_state:
-    st.session_state.monitoring = False
+    st.session_state.monitoring = True  # Start monitoring by default
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -59,27 +59,52 @@ def get_openai_client():
 def get_stock_data(symbol):
     try:
         stock = yf.Ticker(symbol)
-        data = stock.history(period="5d", interval="1m")
+        data_4h = stock.history(period="60d", interval="4h")
+        data_1d = stock.history(period="100d", interval="1d")
+        data_1h = stock.history(period="30d", interval="1h")
         info = stock.info
-        return data, info
+        return data_4h, data_1d, data_1h, info
     except:
-        return None, None
+        return None, None, None, None
 
-def analyze_stock(symbol, data, info):
-    if data is None or len(data) < 20:
+def analyze_stock(symbol, data_4h, data_1d, data_1h, info):
+    if data_4h is None or data_1d is None or data_1h is None or len(data_4h) < 50 or len(data_1d) < 50 or len(data_1h) < 50:
         return "HOLD", "Insufficient data"
     
-    current_price = data['Close'].iloc[-1]
-    sma_20 = data['Close'].rolling(20).mean().iloc[-1]
-    rsi = calculate_rsi(data['Close'])
+    current_price = data_1d['Close'].iloc[-1]
     
-    # Simple trading logic
-    if current_price > sma_20 and rsi < 30:
-        return "BUY", f"Price above SMA20 (${sma_20:.2f}) and RSI oversold ({rsi:.1f})"
-    elif current_price < sma_20 and rsi > 70:
-        return "SELL", f"Price below SMA20 (${sma_20:.2f}) and RSI overbought ({rsi:.1f})"
+    # Calculate indicators
+    rsi_4h = calculate_rsi(data_4h['Close'])
+    rsi_1d = calculate_rsi(data_1d['Close'])
+    sma_21 = data_1d['Close'].rolling(21).mean().iloc[-1]
+    macd_line, macd_signal, macd_hist = calculate_macd(data_1d['Close'])
+    ttm_squeeze = calculate_ttm_squeeze(data_1d)
+    bb_breakdown = check_bb_breakdown(data_1h)
+    
+    # BUY Rules
+    buy_conditions = [
+        rsi_4h > 55,  # RSI > 55 on 4H
+        current_price > sma_21,  # Price above 21-day MA
+        rsi_1d > 50,  # RSI > 50 on 1D
+        ttm_squeeze == "yellow",  # TTM Squeeze Yellow
+        macd_line > macd_signal and macd_hist > 0,  # MACD bullish
+        current_price >= sma_21  # Price at/above 21-day MA
+    ]
+    
+    # NEW SELL Rules
+    sell_conditions = [
+        rsi_1d < 50,  # RSI < 50 (Weak Momentum)
+        current_price < sma_21,  # Price below 21-day MA (No uptrend)
+        macd_line < macd_signal,  # MACD bearish crossover
+        bb_breakdown  # GTFO Rule - 1H Bollinger Band Breakdown
+    ]
+    
+    if all(buy_conditions):
+        return "BUY", f"All BUY conditions met: RSI_4H={rsi_4h:.1f}, RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}, MA21=${sma_21:.2f}"
+    elif all(sell_conditions):
+        return "SELL", f"🔥 GTFO SELL: RSI_1D={rsi_1d:.1f} (<50), Price=${current_price:.2f} below MA21=${sma_21:.2f}, MACD bearish, BB breakdown"
     else:
-        return "HOLD", f"Price: ${current_price:.2f}, SMA20: ${sma_20:.2f}, RSI: {rsi:.1f}"
+        return "HOLD", f"Conditions not met: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}, MA21=${sma_21:.2f}"
 
 def calculate_rsi(prices, period=14):
     delta = prices.diff()
@@ -87,6 +112,56 @@ def calculate_rsi(prices, period=14):
     loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
     rs = gain / loss
     return 100 - (100 / (1 + rs)).iloc[-1]
+
+def calculate_macd(prices, fast=12, slow=26, signal=9):
+    ema_fast = prices.ewm(span=fast).mean()
+    ema_slow = prices.ewm(span=slow).mean()
+    macd_line = ema_fast - ema_slow
+    macd_signal = macd_line.ewm(span=signal).mean()
+    macd_hist = macd_line - macd_signal
+    return macd_line.iloc[-1], macd_signal.iloc[-1], macd_hist.iloc[-1]
+
+def calculate_ttm_squeeze(data, bb_period=20, kc_period=20):
+    # Simplified TTM Squeeze indicator
+    close = data['Close']
+    high = data['High']
+    low = data['Low']
+    
+    # Bollinger Bands
+    bb_mid = close.rolling(bb_period).mean()
+    bb_std = close.rolling(bb_period).std()
+    bb_upper = bb_mid + (2 * bb_std)
+    bb_lower = bb_mid - (2 * bb_std)
+    
+    # Keltner Channels (simplified)
+    kc_mid = close.rolling(kc_period).mean()
+    tr = pd.concat([high - low, abs(high - close.shift(1)), abs(low - close.shift(1))], axis=1).max(axis=1)
+    atr = tr.rolling(kc_period).mean()
+    kc_upper = kc_mid + (1.5 * atr)
+    kc_lower = kc_mid - (1.5 * atr)
+    
+    # Squeeze condition
+    squeeze = (bb_upper.iloc[-1] < kc_upper.iloc[-1]) and (bb_lower.iloc[-1] > kc_lower.iloc[-1])
+    
+    if squeeze:
+        return "yellow"  # Squeeze on
+    else:
+        return "red"  # Squeeze off
+
+def check_bb_breakdown(data_1h, period=20):
+    # GTFO Rule - 1-Hour Bollinger Band Breakdown
+    close = data_1h['Close']
+    bb_mid = close.rolling(period).mean()
+    bb_std = close.rolling(period).std()
+    bb_lower = bb_mid - (2 * bb_std)
+    
+    current_price = close.iloc[-1]
+    prev_price = close.iloc[-2]
+    
+    # Check if price broke below lower Bollinger Band
+    breakdown = (current_price < bb_lower.iloc[-1]) and (prev_price >= bb_lower.iloc[-2])
+    
+    return breakdown
 
 def get_ai_analysis(symbol, current_price, signal, reason):
     try:
@@ -137,34 +212,51 @@ with col1:
     
     if symbols:
         for symbol in symbols:
-            data, info = get_stock_data(symbol)
+            data_4h, data_1d, data_1h, info = get_stock_data(symbol)
             
-            if data is not None and len(data) > 0:
-                current_price = data['Close'].iloc[-1]
-                change = data['Close'].iloc[-1] - data['Close'].iloc[-2] if len(data) > 1 else 0
-                change_pct = (change / data['Close'].iloc[-2] * 100) if len(data) > 1 else 0
+            if data_1d is not None and len(data_1d) > 0:
+                current_price = data_1d['Close'].iloc[-1]
+                change = data_1d['Close'].iloc[-1] - data_1d['Close'].iloc[-2] if len(data_1d) > 1 else 0
+                change_pct = (change / data_1d['Close'].iloc[-2] * 100) if len(data_1d) > 1 else 0
                 
-                # Display stock info
-                st.metric(
-                    label=f"{symbol}",
-                    value=f"${current_price:.2f}",
-                    delta=f"{change_pct:+.2f}%"
-                )
+                # Calculate RSI for display
+                rsi_4h = calculate_rsi(data_4h['Close']) if data_4h is not None and len(data_4h) > 14 else 0
+                rsi_1d = calculate_rsi(data_1d['Close']) if len(data_1d) > 14 else 0
+                
+                # Display stock info with RSI
+                col_a, col_b, col_c = st.columns([2, 1, 1])
+                with col_a:
+                    st.metric(
+                        label=f"{symbol}",
+                        value=f"${current_price:.2f}",
+                        delta=f"{change_pct:+.2f}%"
+                    )
+                with col_b:
+                    st.metric("RSI 4H", f"{rsi_4h:.1f}")
+                with col_c:
+                    st.metric("RSI 1D", f"{rsi_1d:.1f}")
                 
                 # Create chart
                 fig = go.Figure(data=go.Candlestick(
-                    x=data.index,
-                    open=data['Open'],
-                    high=data['High'],
-                    low=data['Low'],
-                    close=data['Close']
+                    x=data_1d.index,
+                    open=data_1d['Open'],
+                    high=data_1d['High'],
+                    low=data_1d['Low'],
+                    close=data_1d['Close']
+                ))
+                # Add 21-day MA
+                fig.add_trace(go.Scatter(
+                    x=data_1d.index,
+                    y=data_1d['Close'].rolling(21).mean(),
+                    name='21-day MA',
+                    line=dict(color='blue')
                 ))
                 fig.update_layout(title=f"{symbol} Price Chart", height=300)
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Analyze and generate alerts
                 if st.session_state.monitoring:
-                    signal, reason = analyze_stock(symbol, data, info)
+                    signal, reason = analyze_stock(symbol, data_4h, data_1d, data_1h, info)
                     
                     if signal in ["BUY", "SELL"]:
                         ai_analysis = get_ai_analysis(symbol, current_price, signal, reason)
@@ -201,7 +293,7 @@ with col2:
     else:
         st.info("No alerts yet. Start monitoring to see trading signals!")
 
-# Auto-refresh when monitoring
+# Auto-refresh when monitoring (persistent)
 if st.session_state.monitoring:
     time.sleep(refresh_interval)
     st.rerun()
