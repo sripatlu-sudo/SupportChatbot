@@ -101,7 +101,7 @@ def get_ai_analysis(symbol, current_price, signal, reason):
         """
         
         response = client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-5.2",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=100
         )
@@ -113,7 +113,7 @@ def get_ai_analysis(symbol, current_price, signal, reason):
 with st.sidebar:
     st.subheader("🎯 Trading Setup")
     
-    symbols = st.text_input("Stock Symbols (comma-separated)", "AAPL,GOOGL,MSFT").upper().split(',')
+    symbols = st.text_input("Stock Symbols (comma-separated)", "AAPL,GOOGL,MSFT, NVDA, MU, ORCL, CHTR").upper().split(',')
     symbols = [s.strip() for s in symbols if s.strip()]
     
     refresh_interval = st.slider("Refresh Interval (seconds)", 10, 300, 60)
