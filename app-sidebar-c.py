@@ -210,7 +210,7 @@ def chat_response(query):
         )
         return response.output[1].content[0].text
     except Exception as e:
-        return f"Error: {str(e)}"
+        return "I'm having trouble connecting right now. Please try rephrasing your question or try again in a moment! 😊"
 
 @st.cache_data(ttl=1800)  # Cache for 30 minutes
 def web_search_response(query):
@@ -222,7 +222,7 @@ def web_search_response(query):
         )
         return llm.invoke(query).content
     except Exception as e:
-        return f"Error: {str(e)}"
+        return "I'm having some difficulty with web search at the moment. Please try asking your question without web search, or try again later! 🌐"
 
 def upload_to_vector_store(file_content, filename):
     try:
@@ -242,7 +242,7 @@ def upload_to_vector_store(file_content, filename):
         
         return f"Successfully uploaded {filename} to knowledge base!"
     except Exception as e:
-        return f"Error uploading file: {str(e)}"
+        return "Sorry, I couldn't upload your file right now. Please try again or contact support! 📄"
 
 # Sidebar
 with st.sidebar:
