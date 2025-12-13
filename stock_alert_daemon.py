@@ -13,6 +13,14 @@ from datetime import datetime
 from plyer import notification
 import smtplib
 from email.mime.text import MIMEText
+import ssl
+import urllib3
+import requests
+
+# Fix SSL certificate issues
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
+os.environ['PYTHONHTTPSVERIFY'] = '0'
 
 # Configuration
 SYMBOLS = ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
@@ -34,7 +42,8 @@ def get_stock_data(symbol):
         data_1d = stock.history(period="100d", interval="1d")
         data_1h = stock.history(period="30d", interval="1h")
         return data_4h, data_1d, data_1h
-    except:
+    except Exception as e:
+        print(f"Error fetching {symbol}: {e}")
         return None, None, None
 
 def calculate_rsi(prices, period=14):

@@ -57,6 +57,32 @@ st.markdown("""
 
 st.markdown('<div class="main-title">📈 Stock Trader AI Agent</div>', unsafe_allow_html=True)
 
+# Trading Criteria Section
+st.subheader("📋 Trading Rules")
+col_buy, col_sell = st.columns(2)
+
+with col_buy:
+    st.markdown("""
+    ### 🟢 BUY Criteria (All Must Be True)
+    1. **RSI > 55** on 4-Hour Chart
+    2. **Price above 21-day MA** (Bollinger Band Midline)
+    3. **RSI > 50** on 1-Day Chart
+    4. **TTM Squeeze Yellow** (Squeeze On)
+    5. **MACD Bullish** (Line > Signal & Histogram > 0)
+    6. **Price ≥ 21-day MA** (Confirmation)
+    """)
+
+with col_sell:
+    st.markdown("""
+    ### 🔴 SELL Criteria (All Must Be True)
+    1. **RSI < 50** (Weak Momentum)
+    2. **Price below 21-day MA** (No Uptrend)
+    3. **MACD Bearish Crossover** (Line < Signal)
+    4. **GTFO Rule** - 1H Bollinger Band Breakdown 🔥
+    """)
+
+st.divider()
+
 # Initialize session state
 if 'alerts' not in st.session_state:
     st.session_state.alerts = []
