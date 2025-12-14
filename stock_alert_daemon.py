@@ -3,16 +3,15 @@
 Stock Alert Daemon - Background service for trading alerts
 Run: python stock_alert_daemon.py
 """
-
-import yfinance as yf
 import pandas as pd
 import time
 import json
 import os
 from datetime import datetime
-from plyer import notification
 import smtplib
 from email.mime.text import MIMEText
+from plyer import notification
+import yfinance as yf
 
 # Configuration
 SYMBOLS = ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
@@ -20,12 +19,13 @@ REFRESH_INTERVAL = 10  # seconds
 ALERT_LOG_FILE = "trading_alerts.json"
 
 # Email settings (optional)
-EMAIL_ENABLED = False
+EMAIL_ENABLED = True
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-ALERT_EMAIL = os.getenv("ALERT_EMAIL")
+EMAIL_USER = os.getenv("OPENAI_TE")
+EMAIL_PASS = os.getenv("OPENAI_TP")
+ALERT_EMAIL = os.getenv("OPENAI_TAE")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def get_stock_data(symbol):
     try:
@@ -140,14 +140,13 @@ def send_email_alert(subject, message):
         msg['Subject'] = subject
         msg['From'] = EMAIL_USER
         msg['To'] = ALERT_EMAIL
-        
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASS)
         server.send_message(msg)
         server.quit()
-    except:
-        pass
+    except Exception as e:
+        print(f"Error processing email: {e}")
 
 def log_alert(alert):
     try:
@@ -169,6 +168,7 @@ def main():
     print(f"Monitoring: {', '.join(SYMBOLS)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
     print("Press Ctrl+C to stop\n")
+    send_email_alert("Job alert","Successfully started daemon!")
     
     last_alerts = {}
     
@@ -202,7 +202,7 @@ def main():
                                 log_alert(alert_data)
                                 
                                 # Send notifications
-                                send_desktop_notification(alert_title, alert_message)
+                                # send_desktop_notification(alert_title, alert_message)
                                 send_email_alert(alert_title, alert_message)
                                 
                                 # Console output
