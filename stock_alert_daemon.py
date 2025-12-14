@@ -3,37 +3,30 @@
 Stock Alert Daemon - Background service for trading alerts
 Run: python stock_alert_daemon.py
 """
-
-import yfinance as yf
 import pandas as pd
 import time
 import json
 import os
 from datetime import datetime
-from plyer import notification
 import smtplib
 from email.mime.text import MIMEText
-import ssl
-import urllib3
-import requests
-
-# Fix SSL certificate issues
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-ssl._create_default_https_context = ssl._create_unverified_context
-os.environ['PYTHONHTTPSVERIFY'] = '0'
+from plyer import notification
+import yfinance as yf
 
 # Configuration
-SYMBOLS = ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
 REFRESH_INTERVAL = 10  # seconds
 ALERT_LOG_FILE = "trading_alerts.json"
+TICKERS_FILE = "swing_trade_tickers.txt"
+RECEPIENTS_FILE = "alert_recepients.txt"
 
 # Email settings (optional)
-EMAIL_ENABLED = False
+EMAIL_ENABLED = True
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-ALERT_EMAIL = os.getenv("ALERT_EMAIL")
+EMAIL_USER = os.getenv("OPENAI_TE")
+EMAIL_PASS = os.getenv("OPENAI_TP")
+ALERT_EMAIL = os.getenv("OPENAI_TAE")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def get_stock_data(symbol):
     try:
@@ -140,23 +133,33 @@ def send_desktop_notification(title, message):
     except:
         pass
 
+def load_email_recipients():
+    try:
+        with open(RECEPIENTS_FILE, 'r') as f:
+            return [line.strip() for line in f if line.strip()]
+    except:
+        return [ALERT_EMAIL] if ALERT_EMAIL else []
+
 def send_email_alert(subject, message):
-    if not EMAIL_ENABLED or not all([EMAIL_USER, EMAIL_PASS, ALERT_EMAIL]):
+    if not EMAIL_ENABLED or not all([EMAIL_USER, EMAIL_PASS]):
+        return
+    
+    recipients = load_email_recipients()
+    if not recipients:
         return
     
     try:
         msg = MIMEText(message)
         msg['Subject'] = subject
         msg['From'] = EMAIL_USER
-        msg['To'] = ALERT_EMAIL
-        
+        msg['To'] = ', '.join(recipients)
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
+        server.sendmail(EMAIL_USER, recipients, msg.as_string())
         server.quit()
-    except:
-        pass
+    except Exception as e:
+        print(f"Error processing email: {e}")
 
 def log_alert(alert):
     try:
@@ -173,17 +176,26 @@ def log_alert(alert):
     except:
         pass
 
+def load_tickers():
+    try:
+        with open(TICKERS_FILE, 'r') as f:
+            return [line.strip() for line in f if line.strip()]
+    except:
+        return ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
+
 def main():
+    symbols = load_tickers()
     print("🚀 Stock Alert Daemon Started")
-    print(f"Monitoring: {', '.join(SYMBOLS)}")
+    print(f"Monitoring: {', '.join(symbols)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
     print("Press Ctrl+C to stop\n")
+    send_email_alert("Job alert","Successfully started daemon!")
     
     last_alerts = {}
     
     try:
         while True:
-            for symbol in SYMBOLS:
+            for symbol in symbols:
                 try:
                     data_4h, data_1d, data_1h = get_stock_data(symbol)
                     
@@ -211,7 +223,7 @@ def main():
                                 log_alert(alert_data)
                                 
                                 # Send notifications
-                                send_desktop_notification(alert_title, alert_message)
+                                # send_desktop_notification(alert_title, alert_message)
                                 send_email_alert(alert_title, alert_message)
                                 
                                 # Console output
