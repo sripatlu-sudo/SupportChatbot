@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Stock Alert Daemon - Background service for SWING trading alerts
-
 Run: python stock_alert_daemon.py
 """
 import pandas as pd
