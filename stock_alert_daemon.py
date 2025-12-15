@@ -13,6 +13,7 @@ import smtplib
 from email.mime.text import MIMEText
 from plyer import notification
 import yfinance as yf
+import openai
 
 # Configuration
 REFRESH_INTERVAL = 60  # seconds
@@ -35,17 +36,12 @@ def get_stock_data(symbol):
         data_4h = stock.history(period="2mo", interval="4h")
         data_1d = stock.history(period="3mo", interval="1d")
         data_1h = stock.history(period="1mo", interval="1h")
-        print(symbol)
-        print(data_4h)
-        print("----------------------------------------------------------------------------")
-        print(data_1d)
-        print("----------------------------------------------------------------------------")
-        print(data_1h)
-        print("----------------------------------------------------------------------------")
-        return data_4h, data_1d, data_1h
+        data_52w = stock.history(period="1y", interval="1d")
+        data_all = stock.history(period="max", interval="1d")
+        return data_4h, data_1d, data_1h, data_52w, data_all
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
-        return None, None, None
+        return None, None, None, None, None
 
 def calculate_rsi(prices, period=14):
     delta = prices.diff()
@@ -93,7 +89,21 @@ def check_bb_breakdown(data_1h, period=20):
     breakdown = (current_price < bb_lower.iloc[-1]) and (prev_price >= bb_lower.iloc[-2])
     return breakdown
 
-def analyze_stock(symbol, data_4h, data_1d, data_1h):
+def check_52_week_low(data_52w):
+    if data_52w is None or len(data_52w) < 252:
+        return False
+    current_price = data_52w['Close'].iloc[-1]
+    week_52_low = data_52w['Low'].min()
+    return current_price <= week_52_low * 1.01  # Within 1% of 52-week low
+
+def check_all_time_high(data_all):
+    if data_all is None or len(data_all) < 100:
+        return False
+    current_price = data_all['Close'].iloc[-1]
+    all_time_high = data_all['High'].max()
+    return current_price >= all_time_high * 0.99  # Within 1% of all-time high
+
+def analyze_stock(symbol, data_4h, data_1d, data_1h, data_52w, data_all):
     if data_4h is None or data_1d is None or data_1h is None or len(data_4h) < 50 or len(data_1d) < 50 or len(data_1h) < 50:
         return "HOLD", "Insufficient data"
     
@@ -107,7 +117,18 @@ def analyze_stock(symbol, data_4h, data_1d, data_1h):
     macd_line, macd_signal, macd_hist = calculate_macd(data_1d['Close'])
     ttm_squeeze = calculate_ttm_squeeze(data_1d)
     bb_breakdown = check_bb_breakdown(data_1h)
-    print(f"Details of analysis: {rsi_4h},{rsi_1d},{sma_21},{macd_line},{macd_signal},{ttm_squeeze},{bb_breakdown}")
+    is_52w_low = check_52_week_low(data_52w)
+    is_ath = check_all_time_high(data_all)
+    
+    print(f"Details of analysis: {rsi_4h},{rsi_1d},{sma_21},{macd_line},{macd_signal},{ttm_squeeze},{bb_breakdown},{is_52w_low},{is_ath}")
+    
+    # Priority alerts for 52-week low and all-time high
+    if is_52w_low:
+        return "BUY", f"📉 52-WEEK LOW ALERT: Price=${current_price:.2f}"
+    
+    if is_ath:
+        return "SELL", f"📈 ALL-TIME HIGH ALERT: Price=${current_price:.2f}"
+    
     # BUY Rules
     buy_conditions = [
         rsi_4h > 55,
@@ -206,17 +227,45 @@ def log_alert(alert):
     except:
         pass
 
+def get_openai_recommendations():
+    if not OPENAI_API_KEY:
+        return []
+    
+    try:
+        openai.api_key = OPENAI_API_KEY
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{
+                "role": "user",
+                "content": "Provide 5 stock ticker symbols for this week's swing and long trading opportunities. Return only ticker symbols separated by commas, no explanations."
+            }],
+            max_tokens=100
+        )
+        tickers = response.choices[0].message.content.strip().split(',')
+        return [ticker.strip().upper() for ticker in tickers if ticker.strip()]
+    except:
+        return []
+
 def load_tickers():
+    file_tickers = []
     try:
         with open(TICKERS_FILE, 'r') as f:
-            return [line.strip() for line in f if line.strip()]
-            print(line)
+            file_tickers = [line.strip() for line in f if line.strip()]
     except:
-        return ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
+        file_tickers = ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
+    
+    ai_tickers = get_openai_recommendations()
+    all_tickers = list(set(file_tickers + ai_tickers))
+    
+    if ai_tickers:
+        print(f"OpenAI recommendations: {', '.join(ai_tickers)}")
+    
+    return all_tickers
 
 def main():
-    symbols = load_tickers()
     print("🚀 Stock Alert Daemon Started")
+    print("Getting OpenAI recommendations...")
+    symbols = load_tickers()
     print(f"Monitoring: {', '.join(symbols)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
     print("Press Ctrl+C to stop\n")
@@ -228,11 +277,11 @@ def main():
         while True:
             for symbol in symbols:
                 try:
-                    data_4h, data_1d, data_1h = get_stock_data(symbol)
+                    data_4h, data_1d, data_1h, data_52w, data_all = get_stock_data(symbol)
                     
                     if data_1d is not None and len(data_1d) > 0:
                         current_price = data_1d['Close'].iloc[-1]
-                        signal, reason = analyze_stock(symbol, data_4h, data_1d, data_1h)
+                        signal, reason = analyze_stock(symbol, data_4h, data_1d, data_1h, data_52w, data_all)
                         
                         if signal in ["BUY", "SELL"]:
                             # Check if this is a new alert
