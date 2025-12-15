@@ -15,7 +15,7 @@ from plyer import notification
 import yfinance as yf
 
 # Configuration
-REFRESH_INTERVAL = 10  # seconds
+REFRESH_INTERVAL = 60  # seconds
 ALERT_LOG_FILE = "trading_alerts.json"
 TICKERS_FILE = "swing_trade_tickers.txt"
 RECEPIENTS_FILE = "alert_recepients.txt"
@@ -32,9 +32,16 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 def get_stock_data(symbol):
     try:
         stock = yf.Ticker(symbol)
-        data_4h = stock.history(period="60d", interval="4h")
-        data_1d = stock.history(period="100d", interval="1d")
-        data_1h = stock.history(period="30d", interval="1h")
+        data_4h = stock.history(period="2mo", interval="4h")
+        data_1d = stock.history(period="3mo", interval="1d")
+        data_1h = stock.history(period="1mo", interval="1h")
+        print(symbol)
+        print(data_4h)
+        print("----------------------------------------------------------------------------")
+        print(data_1d)
+        print("----------------------------------------------------------------------------")
+        print(data_1h)
+        print("----------------------------------------------------------------------------")
         return data_4h, data_1d, data_1h
     except Exception as e:
         print(f"Error fetching {symbol}: {e}")
@@ -90,6 +97,8 @@ def analyze_stock(symbol, data_4h, data_1d, data_1h):
     if data_4h is None or data_1d is None or data_1h is None or len(data_4h) < 50 or len(data_1d) < 50 or len(data_1h) < 50:
         return "HOLD", "Insufficient data"
     
+    print(f"Analyzing stock: {symbol}")
+
     current_price = data_1d['Close'].iloc[-1]
     
     rsi_4h = calculate_rsi(data_4h['Close'])
@@ -98,7 +107,7 @@ def analyze_stock(symbol, data_4h, data_1d, data_1h):
     macd_line, macd_signal, macd_hist = calculate_macd(data_1d['Close'])
     ttm_squeeze = calculate_ttm_squeeze(data_1d)
     bb_breakdown = check_bb_breakdown(data_1h)
-    
+    print(f"Details of analysis: {rsi_4h},{rsi_1d},{sma_21},{macd_line},{macd_signal},{ttm_squeeze},{bb_breakdown}")
     # BUY Rules
     buy_conditions = [
         rsi_4h > 55,
@@ -118,10 +127,13 @@ def analyze_stock(symbol, data_4h, data_1d, data_1h):
     ]
     
     if all(buy_conditions):
+        print("BUY signal conditions met...")
         return "BUY", f"All BUY conditions met: RSI_4H={rsi_4h:.1f}, RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}"
     elif all(sell_conditions):
+        print("SELL signal conditions met...")
         return "SELL", f"🔥 GTFO SELL: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}, BB breakdown"
     else:
+        print("HOLD signal conditions met...")
         return "HOLD", f"Conditions not met: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}"
 
 def send_desktop_notification(title, message):
@@ -140,6 +152,23 @@ def load_email_recipients():
             return [line.strip() for line in f if line.strip()]
     except:
         return [ALERT_EMAIL] if ALERT_EMAIL else []
+
+def send_daemon_alert(subject, message):
+    if not EMAIL_ENABLED or not all([EMAIL_USER, EMAIL_PASS]):
+        return
+      
+    try:
+        msg = MIMEText(message)
+        msg['Subject'] = subject
+        msg['From'] = EMAIL_USER
+        msg['To'] = EMAIL_USER
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASS)
+        server.sendmail(EMAIL_USER, EMAIL_USER, msg.as_string())
+        server.quit()
+    except Exception as e:
+        print(f"Error processing email: {e}")
 
 def send_email_alert(subject, message):
     if not EMAIL_ENABLED or not all([EMAIL_USER, EMAIL_PASS]):
@@ -181,6 +210,7 @@ def load_tickers():
     try:
         with open(TICKERS_FILE, 'r') as f:
             return [line.strip() for line in f if line.strip()]
+            print(line)
     except:
         return ["AAPL", "GOOGL", "MSFT", "NVDA", "MU", "ORCL", "CHTR"]
 
@@ -190,7 +220,7 @@ def main():
     print(f"Monitoring: {', '.join(symbols)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
     print("Press Ctrl+C to stop\n")
-    send_email_alert("Job alert","Successfully started daemon!")
+    send_daemon_alert("Job alert","Successfully started daemon!")
     
     last_alerts = {}
     
