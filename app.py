@@ -5,6 +5,12 @@ from langchain_classic.memory import ConversationBufferMemory
 from langchain_classic.vectorstores import FAISS
 from langchain_community.llms import Ollama
 from langchain_classic.prompts import PromptTemplate
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from datetime import datetime
+import io
 
 
 st.set_page_config(page_title="🤖 Customer Support Chatbot", layout="wide", initial_sidebar_state="expanded")
@@ -12,14 +18,15 @@ st.set_page_config(page_title="🤖 Customer Support Chatbot", layout="wide", in
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-.stApp{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);color:#2c3e50;font-family:'Inter',sans-serif}
+.stApp{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);color:#2c3e50;font-family:'Inter',sans-serif;padding-bottom:150px}
 header{visibility:hidden}
 .corp-title{text-align:center;font-size:36px;font-weight:600;color:#1a365d;margin-top:-30px;margin-bottom:8px;letter-spacing:-0.5px}
 .corp-subtitle{text-align:center;font-size:16px;color:#4a5568;margin-bottom:30px;font-weight:400}
-.stChatInput > div > div > div > div {border: 3px solid #1a365d !important; border-radius: 10px !important; box-shadow: 0 0 10px rgba(26,54,93,0.3) !important;}
+
 .css-1d391kg, .css-6qob1r, .css-18e3th9 {width: 300px !important;}
 .css-1lcbmhc, .css-1rs6os, .css-17eq0hr {margin-left: 0px !important;}
 .sidebar .sidebar-content {display: block !important;}
+.footer-fixed{position:fixed;bottom:0;left:0;width:100%;z-index:999;background:#1a365d;color:white;padding:15px;text-align:center;border-radius:0;margin:0;box-shadow:0 -2px 10px rgba(0,0,0,0.2)}
 </style>
 <div class="corp-title">🤖 Customer Support Chatbot</div>
 <div class="corp-subtitle">Enterprise Solutions | Powered by AI</div>
@@ -35,7 +42,10 @@ def init_chain():
     )
     
     prompt = PromptTemplate(
-        template="""You are a customer support assistant. Answer questions ONLY based on the provided context. Provide detailed responses and be courteous. If the answer is not in the context, say "I don't have information about that in my knowledge base."
+        template="""You are Spectrum mobile customer support assistant. 
+        - Answer questions ONLY based on the provided context, and relavent to Sepctrum mobile products and services. 
+        - Provide detailed responses, in bullet point format when possible, and be courteous. 
+        - If the answer is not in the context, say "I don't have that information. Please contact  (833) 224-6603 for further assistance.
 
     Context: {context}
 
@@ -83,9 +93,43 @@ if question := st.chat_input("💬 How may we assist you today?"):
         st.rerun()
 
 
+def generate_pdf():
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Title
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1  # Center alignment
+    )
+    story.append(Paragraph("Customer Support Chat History", title_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Chat messages
+    for i, msg in enumerate(st.session_state.messages):
+        if msg["role"] == "user":
+            story.append(Paragraph(f"<b>Question {i//2+1}:</b>", styles['Heading3']))
+            story.append(Paragraph(msg["content"], styles['Normal']))
+            story.append(Spacer(1, 10))
+        else:
+            story.append(Paragraph("<b>Answer:</b>", styles['Heading3']))
+            story.append(Paragraph(msg["content"], styles['Normal']))
+            story.append(Spacer(1, 20))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # Sidebar for chat history
 with st.sidebar:
     st.header("Chat History")
+    
     if st.button("Clear History"):
         st.session_state.messages = []
         st.session_state.selected_msg = None
@@ -129,6 +173,20 @@ else:
                         st.session_state.feedback[i] = "dislike"
 
 
+# Download PDF button in main area
+if st.session_state.messages:
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("📄 Download Chat as PDF", use_container_width=True):
+            pdf_buffer = generate_pdf()
+            st.download_button(
+                label="💾 Click to Save PDF",
+                data=pdf_buffer,
+                file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+
 # Footer
-st.markdown("---")
-st.markdown("<div style='text-align: center; background: #1a365d; color: white; padding: 15px; border-radius: 10px; margin-top: 20px;'><strong>Need further assistance?</strong> Call us at <strong>(833) 224-6603</strong></div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-fixed'><strong>Need further assistance?</strong> Call us at <strong>(833) 224-6603</strong></div>", unsafe_allow_html=True)
