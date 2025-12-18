@@ -267,13 +267,23 @@ def main():
     symbols = load_tickers()
     print(f"Monitoring: {', '.join(symbols)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
+    print("Auto-shutdown at 3:00 PM local time")
     print("Press Ctrl+C to stop\n")
-    send_daemon_alert("Job alert","Successfully started daemon!")
+    send_daemon_alert("Daemon started","Successfully started daemon!")
     
-    last_alerts = {}
+    last_alerts = {}  # Format: {symbol: {'signal': 'BUY/SELL', 'timestamp': datetime, 'price': float}}
+    COOLDOWN_HOURS = 4  # Minimum hours between alerts for same ticker
     
     try:
         while True:
+            current_time = datetime.now()
+            
+            # Check if it's 3:00 PM or later
+            if current_time.hour >= 15:
+                print(f"\n🕰️ Scheduled shutdown at {current_time.strftime('%H:%M:%S')}")
+                send_daemon_alert("Daemon Shitdown", "Stock Alert Daemon automatically stopped at 3:00 PM")
+                break
+            
             for symbol in symbols:
                 try:
                     data_4h, data_1d, data_1h, data_52w, data_all = get_stock_data(symbol)
@@ -283,11 +293,21 @@ def main():
                         signal, reason = analyze_stock(symbol, data_4h, data_1d, data_1h, data_52w, data_all)
                         
                         if signal in ["BUY", "SELL"]:
-                            # Check if this is a new alert
-                            alert_key = f"{symbol}_{signal}"
-                            if alert_key not in last_alerts or last_alerts[alert_key] != current_price:
+                            should_alert = False
+                            
+                            if symbol not in last_alerts:
+                                should_alert = True
+                            else:
+                                last_alert = last_alerts[symbol]
+                                time_diff = current_time - last_alert['timestamp']
+                                hours_passed = time_diff.total_seconds() / 3600
                                 
-                                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                # Alert if cooldown period passed OR signal changed
+                                if hours_passed >= COOLDOWN_HOURS or last_alert['signal'] != signal:
+                                    should_alert = True
+                            
+                            if should_alert:
+                                timestamp = current_time.strftime("%Y-%m-%d %H:%M:%S")
                                 alert_title = f"🚨 {signal} {symbol}"
                                 alert_message = f"Price: ${current_price:.2f}\n{reason}"
                                 
@@ -309,13 +329,12 @@ def main():
                                 print(f"[{timestamp}] {alert_title} - ${current_price:.2f}")
                                 print(f"  Reason: {reason}\n")
                                 
-                                last_alerts[alert_key] = current_price
-                        
-                        else:
-                            # Remove from last_alerts if no longer signaling
-                            for key in list(last_alerts.keys()):
-                                if key.startswith(f"{symbol}_"):
-                                    del last_alerts[key]
+                                # Update last alert tracking
+                                last_alerts[symbol] = {
+                                    'signal': signal,
+                                    'timestamp': current_time,
+                                    'price': current_price
+                                }
                 
                 except Exception as e:
                     print(f"Error processing {symbol}: {e}")
