@@ -213,6 +213,7 @@ def send_email_alert(subject, message):
 
 def log_alert(alert):
     try:
+        print(alert)
         alerts = []
         if os.path.exists(ALERT_LOG_FILE):
             with open(ALERT_LOG_FILE, 'r') as f:
@@ -223,8 +224,8 @@ def log_alert(alert):
         
         with open(ALERT_LOG_FILE, 'w') as f:
             json.dump(alerts, f, indent=2)
-    except:
-        pass
+    except Exception as e:
+        print(f"{e}")
 
 def get_openai_recommendations():
     if not OPENAI_API_KEY:
@@ -282,7 +283,7 @@ def main():
             if current_time.hour >= 15:
                 print(f"\n🕰️ Scheduled shutdown at {current_time.strftime('%H:%M:%S')}")
                 send_daemon_alert("Daemon Shitdown", "Stock Alert Daemon automatically stopped at 3:00 PM")
-                break
+                exit()
             
             for symbol in symbols:
                 try:
@@ -313,11 +314,11 @@ def main():
                                 
                                 # Log alert
                                 alert_data = {
-                                    'timestamp': timestamp,
-                                    'symbol': symbol,
-                                    'signal': signal,
-                                    'price': current_price,
-                                    'reason': reason
+                                    "timestamp": timestamp,
+                                    "symbol": symbol,
+                                    "signal": signal,
+                                    "price": current_price,
+                                    "reason": reason
                                 }
                                 log_alert(alert_data)
                                 
