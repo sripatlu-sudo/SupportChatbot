@@ -11,4 +11,5 @@ langchain-community
 sentence-transformers
 faiss-cpu
 duckduckgo-search
-langchain-openai 
+langchain-openai
+twilio.rest 
