@@ -33,8 +33,9 @@ header{visibility:hidden}
 .footer-fixed{position:fixed;bottom:0;left:0;width:100%;z-index:999;background:linear-gradient(90deg,#1976d2,#7b1fa2);color:#ffffff;padding:15px;text-align:center;border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,0.15)}
 stButton>button{background:#ffffff;color:#1976d2;border:2px solid #1976d2;border-radius:25px;font-weight:500;transition:all 0.3s;padding:0.4rem 1.2rem}
 stButton>button:hover{background:#1976d2;color:#ffffff;transform:scale(1.05);box-shadow:0 6px 20px rgba(25,118,210,0.4)}
+[data-testid="chat-message"][data-testid*="user"] {background-color:#d0d0d0!important}
 </style>
-<div class="friendly-title">💬 Spectrum Support Chatbot</div>
+<div class="friendly-title">💬 Spectrum Agent Chatbot</div>
 <div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist</span></div>
 """, unsafe_allow_html=True)
 
@@ -90,6 +91,27 @@ def init_chain():
         combine_docs_chain_kwargs={"prompt": prompt}
     )
 
+def get_cached_response(question):
+    cache_file = "response_cache.json"
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            cache = json.load(f)
+        return cache.get(question)
+    return None
+
+def save_to_cache(question, response):
+    cache_file = "response_cache.json"
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            cache = json.load(f)
+    else:
+        cache = {}
+    
+    cache[question] = response
+    
+    with open(cache_file, 'w') as f:
+        json.dump(cache, f, indent=2)
+
 # Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -99,7 +121,6 @@ if "selected_msg" not in st.session_state:
     st.session_state.selected_msg = None
 if "last_question" not in st.session_state:
     st.session_state.last_question = None
-
 
 # Initialize chain
 chain = init_chain()
@@ -112,10 +133,18 @@ if question := st.chat_input("💬 Hello, how can I assist you today?"):
         st.session_state.last_question = question
         st.session_state.messages.append({"role": "user", "content": question})
         
-        with st.spinner("Processing your request..."):
-            response = chain({"question": question, "chat_history": [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]})
+        # Check cache first
+        cached_response = get_cached_response(question)
         
-        st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+        if cached_response:
+            response_text = cached_response
+        else:
+            with st.spinner("Processing your request..."):
+                response = chain({"question": question, "chat_history": [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]})
+            response_text = response["answer"]
+            save_to_cache(question, response_text)
+        
+        st.session_state.messages.append({"role": "assistant", "content": response_text})
         if len(st.session_state.messages) > 20:
             st.session_state.messages = st.session_state.messages[-20:]
         st.rerun()

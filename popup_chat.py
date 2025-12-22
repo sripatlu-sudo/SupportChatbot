@@ -70,6 +70,27 @@ if "messages" not in st.session_state:
 if "feedback" not in st.session_state:
     st.session_state.feedback = {}
 
+def get_cached_response(question):
+    cache_file = "response_cache.json"
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            cache = json.load(f)
+        return cache.get(question)
+    return None
+
+def save_to_cache(question, response):
+    cache_file = "response_cache.json"
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as f:
+            cache = json.load(f)
+    else:
+        cache = {}
+    
+    cache[question] = response
+    
+    with open(cache_file, 'w') as f:
+        json.dump(cache, f, indent=2)
+
 def save_feedback(question, response, feedback):
     feedback_data = {
         "timestamp": datetime.now().isoformat(),
@@ -111,13 +132,21 @@ with st.container():
                         save_feedback(question, msg["content"], "dislike")
                         st.session_state.feedback[i] = "dislike"
 
-if question := st.chat_input("💬 Hello, how can I assist you today?"):
+if question := st.chat_input("💬 Hello, how can Spectra assist you today?"):
     st.session_state.messages.append({"role": "user", "content": question})
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.spinner("Thinking..."):
-            response = chain({"question": question, "chat_history": []})
+    # Check cache first
+    cached_response = get_cached_response(question)
     
-    st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+    if cached_response:
+        response_text = cached_response
+    else:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            with st.spinner("Thinking..."):
+                response = chain({"question": question, "chat_history": []})
+        response_text = response["answer"]
+        save_to_cache(question, response_text)
+    
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
     st.rerun()
