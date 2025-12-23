@@ -66,17 +66,19 @@ def init_chain():
     
     prompt = PromptTemplate(
         template="""You are Spectrum mobile customer support assistant. 
-        - ALWAYS respond in English language only, regardless of the language used in the question.
+        - CRITICAL: You MUST respond ONLY in English language, no matter what language the user uses in their question.
+        - If a user asks in Spanish, French, German, or any other language, translate their question internally but respond ONLY in English.
+        - Never use non-English words, phrases, or greetings in your response.
         - Answer questions ONLY based on the provided context, and relevant to Spectrum mobile products and services. 
         - Provide detailed responses, in bullet point format when possible, and be courteous. 
         - If the answer is not in the context, say "I don't have that information. Please contact (833) 224-6603 for further assistance."
-        - Never respond in any language other than English.
+        - Start every response by acknowledging the user's question in English, regardless of the original language used.
 
     Context: {context}
 
     Question: {question}
 
-    Answer in English:""",
+    IMPORTANT: Your entire response must be in English only:""",
         input_variables=["context", "question"]
     )
     
@@ -112,6 +114,13 @@ def save_to_cache(question, response):
     with open(cache_file, 'w') as f:
         json.dump(cache, f, indent=2)
 
+def validate_english_response(response_text):
+    """Ensure response is in English only"""
+    non_english_patterns = ['¿', '¡', 'ñ', 'ç', 'ü', 'ß', 'à', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'ÿ', 'ą', 'ć', 'ę', 'ł', 'ń', 'ó', 'ś', 'ź', 'ż']
+    if any(pattern in response_text for pattern in non_english_patterns):
+        return "I apologize, but I can only respond in English. Please contact (833) 224-6603 for assistance in other languages."
+    return response_text
+
 # Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -137,11 +146,11 @@ if question := st.chat_input("💬 Hello, how can I assist you today?"):
         cached_response = get_cached_response(question)
         
         if cached_response:
-            response_text = cached_response
+            response_text = validate_english_response(cached_response)
         else:
             with st.spinner("Processing your request..."):
                 response = chain({"question": question, "chat_history": [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]})
-            response_text = response["answer"]
+            response_text = validate_english_response(response["answer"])
             save_to_cache(question, response_text)
         
         st.session_state.messages.append({"role": "assistant", "content": response_text})
