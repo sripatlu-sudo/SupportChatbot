@@ -9,10 +9,12 @@ import json
 import os
 from datetime import datetime
 import smtplib
-from email.mime.text import MIMEText
-from plyer import notification
 import yfinance as yf
 import openai
+
+from email.mime.text import MIMEText
+from plyer import notification
+from openai import OpenAI
 
 # Configuration
 REFRESH_INTERVAL = 60  # seconds
@@ -213,7 +215,6 @@ def send_email_alert(subject, message):
 
 def log_alert(alert):
     try:
-        print(alert)
         alerts = []
         if os.path.exists(ALERT_LOG_FILE):
             with open(ALERT_LOG_FILE, 'r') as f:
@@ -228,23 +229,40 @@ def log_alert(alert):
         print(f"{e}")
 
 def get_openai_recommendations():
+    print(OPENAI_API_KEY)
     if not OPENAI_API_KEY:
         return []
     
     try:
-        openai.api_key = OPENAI_API_KEY
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{
-                "role": "user",
-                "content": "Provide 5 stock ticker symbols for this week's swing and long trading opportunities. Return only ticker symbols separated by commas, no explanations."
-            }],
-            max_tokens=100
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+                model="gpt-5.2",  # modern replacement
+                messages=[
+                     {
+                        "role": "assistant",
+                         "content": (
+                            "You are an stock expert specializing in swing trades. " 
+                            "Each day, generate 10–15 swing-trade recommendations for large-cap U.S. stocks (market cap > $10 B). "
+                            "Use technical analysis to justify each pick: look for RSI oversold/overbought levels, bullish/bearish MACD crossovers,"
+                            "price crossing the 20-day/50-day moving averages, and TTM Squeeze breakouts."
+                        )
+                    },
+                    {
+                        "role": "user",
+                         "content": (
+                            "Provide exactly 10-15 US stock ticker symbols, for this week's "
+                            "swing and long trading opportunities. "
+                            "Return ONLY the final answer as a single line of comma-separated "
+                            "ticker symbols. No explanations, no extra text."
+                        )
+                    }
+                ]
         )
-        tickers = response.choices[0].message.content.strip().split(',')
-        return [ticker.strip().upper() for ticker in tickers if ticker.strip()]
-    except:
-        return []
+        tickers = response.choices[0].message.content
+        return [x.strip() for x in tickers.split(",")]
+    
+    except Exception as e:
+        print(f"{e}")
 
 def load_tickers():
     file_tickers = []
@@ -256,33 +274,36 @@ def load_tickers():
     
     ai_tickers = get_openai_recommendations()
     all_tickers = list(set(file_tickers + ai_tickers))
-    
+
     if ai_tickers:
         print(f"OpenAI recommendations: {', '.join(ai_tickers)}")
     
     return all_tickers
 
 def main():
-    print("🚀 Stock Alert Daemon Started")
+   
+    #Set local vars
+    start_time = datetime.now()
+    last_alerts = {}  # Format: {symbol: {'signal': 'BUY/SELL', 'timestamp': datetime, 'price': float}}
+    COOLDOWN_HOURS = 4  # Minimum hours between alerts for same ticker
+
+    #Print messages for launch confirmation
+    print(f"🚀 Stock Alert Daemon Started at {start_time.strftime('%H:%M:%S')}")
     print("Getting OpenAI recommendations...")
     symbols = load_tickers()
     print(f"Monitoring: {', '.join(symbols)}")
     print(f"Refresh interval: {REFRESH_INTERVAL} seconds")
-    print("Auto-shutdown at 3:00 PM local time")
-    print("Press Ctrl+C to stop\n")
-    send_daemon_alert("Daemon started","Successfully started daemon!")
     
-    last_alerts = {}  # Format: {symbol: {'signal': 'BUY/SELL', 'timestamp': datetime, 'price': float}}
-    COOLDOWN_HOURS = 4  # Minimum hours between alerts for same ticker
-    
+    #Daemon email alerts
+    send_daemon_alert("Stock Daemon started",f"Successfully started daemon on {start_time.strftime('%H:%M:%S')}. Monitoring tickers {symbols} today")
+
     try:
         while True:
-            current_time = datetime.now()
-            
             # Check if it's 3:00 PM or later
+            current_time = datetime.now()
             if current_time.hour >= 15:
                 print(f"\n🕰️ Scheduled shutdown at {current_time.strftime('%H:%M:%S')}")
-                send_daemon_alert("Daemon Shitdown", "Stock Alert Daemon automatically stopped at 3:00 PM")
+                send_daemon_alert(f"Stock Daemon Shutdown", f"Stock Alert Daemon automatically stopped at {current_time.strftime('%H:%M:%S')}")
                 exit()
             
             for symbol in symbols:
