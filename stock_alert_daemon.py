@@ -153,7 +153,7 @@ def analyze_stock(symbol, data_4h, data_1d, data_1h, data_52w, data_all):
         return "BUY", f"All BUY conditions met: RSI_4H={rsi_4h:.1f}, RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}"
     elif all(sell_conditions):
         print("SELL signal conditions met...")
-        return "SELL", f"🔥 SELL: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}, BB breakdown"
+        return "SELL", f"🔥 SELL: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}, B band breakdown"
     else:
         print("HOLD signal conditions met...")
         return "HOLD", f"Conditions not met: RSI_1D={rsi_1d:.1f}, Price=${current_price:.2f}"
