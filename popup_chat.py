@@ -23,7 +23,7 @@ stChatInput>div{border-radius:25px}
 .stChatInput input::placeholder{color:#ff9800!important}
 .stSpinner>div{display:flex;justify-content:center;align-items:center;height:100px}
 </style>
-<div class="chat-header">Spectra...Your AI Assistant</div>
+<div class="chat-header">Spectra:) Support Chatbot</div>
 <div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist 🌟</span></div>
 """, unsafe_allow_html=True)
 
@@ -43,27 +43,36 @@ def init_chain():
     vectordb = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
     
     prompt = PromptTemplate(
-        template="""You are Spectrum mobile customer support assistant. 
-        - CRITICAL: You MUST respond ONLY in English language, no matter what language the user uses in their question.
-        - If a user asks in Spanish, French, German, or any other language, translate their question internally but respond ONLY in English.
-        - Never use non-English words, phrases, or greetings in your response.
-        - Answer questions ONLY based on the provided context, and relevant to Spectrum mobile products and services. 
-        - Provide detailed responses, in bullet point format when possible, and be courteous. 
-        - If the answer is not in the context, say "I don't have that information. Please contact (833) 224-6603 for further assistance."
-        - Start every response by acknowledging the user's question in English, regardless of the original language used.
-        - Include the actual document link at the bottom of the response with prefer "For more details, please refer "
+        template="""You are a Spectrum mobile customer support assistant. Follow these rules EXACTLY:
 
-    Context: {context}
-
-    Question: {question}
-
-    IMPORTANT: Your entire response must be in English only:""",
+        STRICT REQUIREMENTS:
+        1. Answer ONLY in English - no other languages permitted
+        2. Use ONLY information from the provided context below
+        3. If information is not in context, respond: "I don't have that information. Please contact (833) 224-6603 for further assistance 
+           or visit https://www.spectrum.net/support/category/mobile for further assistance."
+        4. Only mention phone number (833) 224-6603 - no other numbers
+        5. Stay focused on Spectrum mobile products and services only
+        6. Provide factual, direct answers without speculation
+        7. Use bullet points for clarity when listing multiple items
+        8. Include the actual link at the bottom of the response with a prefix "For more details, please refer "
+        
+        CONTEXT INFORMATION:
+        {context}
+        
+        CUSTOMER QUESTION:
+        {question}
+        
+        RESPONSE (English only, context-based facts only):""",
         input_variables=["context", "question"]
     )
     
     return ConversationalRetrievalChain.from_llm(
-        ChatBedrock(model_id=config["model_id"], region_name=config["aws_region"]),
-        vectordb.as_retriever(search_kwargs={"k": 3}),
+        ChatBedrock(
+            model_id=config["model_id"], 
+            region_name=config["aws_region"],
+            model_kwargs={"temperature": config["temperature"], "max_tokens": 500}
+        ),
+        vectordb.as_retriever(search_kwargs={"k": 5}),
         memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True),
         combine_docs_chain_kwargs={"prompt": prompt}
     )
@@ -93,6 +102,29 @@ def save_to_cache(question, response):
     
     with open(cache_file, 'w') as f:
         json.dump(cache, f, indent=2)
+
+def validate_response_quality(response_text, question):
+    """Validate response meets quality standards"""
+    # Check for English only
+    non_english_patterns = ['¿', '¡', 'ñ', 'ç', 'ü', 'ß', 'à', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'ÿ']
+    if any(pattern in response_text for pattern in non_english_patterns):
+        return "I can only respond in English. Please contact (833) 224-6603 for assistance."
+    
+    # Check for unauthorized phone numbers
+    import re
+    phone_pattern = r'\(?\d{3}\)?[-\s]?\d{3}[-\s]?\d{4}'
+    phones = re.findall(phone_pattern, response_text)
+    for phone in phones:
+        if '833-224-6603' not in phone and '(833) 224-6603' not in phone:
+            response_text = response_text.replace(phone, '(833) 224-6603')
+    
+    # Ensure factual tone
+    speculative_words = ['maybe', 'possibly', 'might be', 'could be', 'perhaps', 'I think', 'probably']
+    for word in speculative_words:
+        if word.lower() in response_text.lower():
+            return "I don't have that information. Please contact (833) 224-6603 for further assistance."
+    
+    return response_text
 
 def validate_english_response(response_text):
     """Ensure response is in English only"""
@@ -149,13 +181,13 @@ if question := st.chat_input("💬 Hello, how can Spectra assist you today?"):
     cached_response = get_cached_response(question)
     
     if cached_response:
-        response_text = validate_english_response(cached_response)
+        response_text = validate_response_quality(cached_response, question)
     else:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.spinner("Thinking..."):
                 response = chain({"question": question, "chat_history": []})
-        response_text = validate_english_response(response["answer"])
+        response_text = validate_response_quality(response["answer"], question)
         save_to_cache(question, response_text)
     
     st.session_state.messages.append({"role": "assistant", "content": response_text})

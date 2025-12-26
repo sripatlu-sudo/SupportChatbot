@@ -35,8 +35,8 @@ stButton>button{background:#ffffff;color:#1976d2;border:2px solid #1976d2;border
 stButton>button:hover{background:#1976d2;color:#ffffff;transform:scale(1.05);box-shadow:0 6px 20px rgba(25,118,210,0.4)}
 [data-testid="chat-message"][data-testid*="user"] {background-color:#d0d0d0!important}
 </style>
-<div class="friendly-title">💬 Spectrum Agent Chatbot</div>
-<div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist</span></div>
+<div class="friendly-title">Spectra:) Support Chatbot</div>
+<div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist 🌟</span></div>
 """, unsafe_allow_html=True)
 
 def load_config():
@@ -63,32 +63,37 @@ def init_chain():
         embeddings,
         allow_dangerous_deserialization=True,
     )
-    
     prompt = PromptTemplate(
-        template="""You are Spectrum mobile customer support assistant. 
-        - CRITICAL: You MUST respond ONLY in English language, no matter what language the user uses in their question.
-        - If a user asks in Spanish, French, German, or any other language, translate their question internally but respond ONLY in English.
-        - Never use non-English words, phrases, or greetings in your response.
-        - Answer questions ONLY based on the provided context, and relevant to Spectrum mobile products and services. 
-        - Provide detailed responses, in bullet point format when possible, and be courteous. 
-        - If the answer is not in the context, say "I don't have that information. Please contact (833) 224-6603 for further assistance."
-        - Start every response by acknowledging the user's question in English, regardless of the original language used.
+        template="""You are a Spectrum mobile customer support assistant. Follow these rules EXACTLY:
 
-    Context: {context}
-
-    Question: {question}
-
-    IMPORTANT: Your entire response must be in English only:""",
+        STRICT REQUIREMENTS:
+        1. Answer ONLY in English - no other languages permitted
+        2. Use ONLY information from the provided context below
+        3. If information is not in context, respond: "I don't have that information. Please contact (833) 224-6603 for further assistance 
+            or visit https://www.spectrum.net/support/category/mobile for further assistance."
+        4. Only mention phone number (833) 224-6603 - no other numbers
+        5. Stay focused on Spectrum mobile products and services only
+        6. Provide factual, direct answers without speculation
+        7. Use bullet points for clarity when listing multiple items
+        8. Include the actual link at the bottom of the response with a prefix "For more details, please refer "
+        
+        CONTEXT INFORMATION:
+        {context}
+        
+        CUSTOMER QUESTION:
+        {question}
+        
+        RESPONSE (English only, context-based facts only):""",
         input_variables=["context", "question"]
     )
     
     return ConversationalRetrievalChain.from_llm(
         ChatBedrock(
-            model_id=config["model_id"],
+            model_id=config["model_id"], 
             region_name=config["aws_region"],
-            model_kwargs={"temperature": config["temperature"]}
+            model_kwargs={"temperature": config["temperature"], "max_tokens": 500}
         ),
-        vectordb.as_retriever(search_kwargs={"k": 8}),
+        vectordb.as_retriever(search_kwargs={"k": 5}),
         memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True),
         combine_docs_chain_kwargs={"prompt": prompt}
     )
@@ -137,7 +142,7 @@ chain = init_chain()
 with st.expander("⚠️ Disclaimer"):
     st.warning("This chatbot is an AI assistant built for demonstration. Responses may be inaccurate. Do not use for legal, financial or sensitive decisions.")
 
-if question := st.chat_input("💬 Hello, how can I assist you today?"):
+if question := st.chat_input("💬 Hello, how can Spectra assist you today?"):
     if question != st.session_state.last_question:
         st.session_state.last_question = question
         st.session_state.messages.append({"role": "user", "content": question})
