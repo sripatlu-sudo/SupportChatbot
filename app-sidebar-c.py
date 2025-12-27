@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 from openai import OpenAI
-from langchain_openai import ChatOpenAI
 
 st.set_page_config(
     page_title="College Buddy Chatbot",
