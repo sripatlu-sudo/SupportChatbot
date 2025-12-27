@@ -10,6 +10,3 @@ langchain-openai
 langchain-community
 sentence-transformers
 faiss-cpu
-duckduckgo-search
-langchain-openai
-twilio.rest 
