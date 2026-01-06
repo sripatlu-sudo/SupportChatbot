@@ -174,7 +174,7 @@ with st.container():
                         save_feedback(question, msg["content"], "dislike")
                         st.session_state.feedback[i] = "dislike"
 
-if question := st.chat_input("💬 Hello, how can Spectra assist you today?"):
+if question := st.chat_input("💬 Hello, how can Spectra assist you?"):
     st.session_state.messages.append({"role": "user", "content": question})
     
     # Check cache first
