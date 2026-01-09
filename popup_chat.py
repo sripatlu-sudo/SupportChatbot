@@ -25,7 +25,7 @@ stChatInput>div{border-radius:25px;background:#ffffff}
 .stChatInput input::placeholder{color:#ff9800!important}
 .stSpinner>div{display:flex;justify-content:center;align-items:center;height:100px}
 </style>
-<div class="chat-header">Spectra:) Support Chatbot</div>
+<div class="chat-header">Spectra:) Customer Chatbot</div>
 <div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist 🌟</span></div>
 """, unsafe_allow_html=True)
 

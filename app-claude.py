@@ -32,10 +32,12 @@ header{visibility:hidden}
 .footer-fixed{position:fixed;bottom:0;left:0;width:100%;z-index:999;background:linear-gradient(90deg,#1976d2,#7b1fa2);color:#ffffff;padding:15px;text-align:center;border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,0.15)}
 stButton>button{background:#ffffff;color:#1976d2;border:2px solid #1976d2;border-radius:25px;font-weight:500;transition:all 0.3s;padding:0.4rem 1.2rem}
 stButton>button:hover{background:#1976d2;color:#ffffff;transform:scale(1.05);box-shadow:0 6px 20px rgba(25,118,210,0.4)}
+.feedback-liked{background:#4caf50 !important;color:#ffffff !important;border:2px solid #4caf50 !important}
+.feedback-disliked{background:#f44336 !important;color:#ffffff !important;border:2px solid #f44336 !important}
 [data-testid="chat-message"][data-testid*="user"] {background-color:#d0d0d0!important}
 
 </style>
-<div class="friendly-title">Spectra:) Support Chatbot</div>
+<div class="friendly-title">Spectra:) Agent Chatbot</div>
 <div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist 🌟</span></div>
 """, unsafe_allow_html=True)
 
@@ -237,11 +239,19 @@ else:
             if msg["role"] == "assistant":
                 col1, col2, col3 = st.columns([1, 1, 10])
                 with col1:
+                    like_class = "feedback-liked" if st.session_state.feedback.get(i) == "like" else ""
                     if st.button("👍", key=f"like_{i}"):
                         st.session_state.feedback[i] = "like"
+                        st.rerun()
+                    if like_class:
+                        st.markdown(f'<style>button[data-testid="baseButton-secondary"]:has([data-testid="like_{i}"]) {{background:#4caf50 !important;color:#ffffff !important;border:2px solid #4caf50 !important}}</style>', unsafe_allow_html=True)
                 with col2:
+                    dislike_class = "feedback-disliked" if st.session_state.feedback.get(i) == "dislike" else ""
                     if st.button("👎", key=f"dislike_{i}"):
                         st.session_state.feedback[i] = "dislike"
+                        st.rerun()
+                    if dislike_class:
+                        st.markdown(f'<style>button[data-testid="baseButton-secondary"]:has([data-testid="dislike_{i}"]) {{background:#f44336 !important;color:#ffffff !important;border:2px solid #f44336 !important}}</style>', unsafe_allow_html=True)
 
 
 # Download PDF button in main area
