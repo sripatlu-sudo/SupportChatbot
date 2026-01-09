@@ -27,13 +27,13 @@ header{visibility:hidden}
 .friendly-subtitle{text-align:center;font-size:18px;color:#7b1fa2;margin-bottom:30px;font-weight:400}
 .welcome-badge{display:inline-block;background:linear-gradient(45deg,#4caf50,#81c784);color:#ffffff;padding:6px 16px;border-radius:20px;font-size:14px;font-weight:500;margin:10px auto;box-shadow:0 3px 10px rgba(76,175,80,0.3)}
 
-.css-1d391kg, .css-6qob1r, .css-18e3th9 {width: 300px !important;background:#ffffff;border:1px solid #e1bee7;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
-.css-1lcbmhc, .css-1rs6os, .css-17eq0hr {margin-left: 0px !important;}
-.sidebar .sidebar-content {display: block !important;}
+[data-testid="stSidebar"] {width: 300px !important;background:#ffffff;border:1px solid #e1bee7;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08);visibility: visible !important;display: block !important;}
+[data-testid="stSidebar"] > div {display: block !important;}
 .footer-fixed{position:fixed;bottom:0;left:0;width:100%;z-index:999;background:linear-gradient(90deg,#1976d2,#7b1fa2);color:#ffffff;padding:15px;text-align:center;border-radius:0;box-shadow:0 -4px 20px rgba(0,0,0,0.15)}
 stButton>button{background:#ffffff;color:#1976d2;border:2px solid #1976d2;border-radius:25px;font-weight:500;transition:all 0.3s;padding:0.4rem 1.2rem}
 stButton>button:hover{background:#1976d2;color:#ffffff;transform:scale(1.05);box-shadow:0 6px 20px rgba(25,118,210,0.4)}
 [data-testid="chat-message"][data-testid*="user"] {background-color:#d0d0d0!important}
+
 </style>
 <div class="friendly-title">Spectra:) Support Chatbot</div>
 <div style="text-align:center"><span class="welcome-badge">🌟 Always Happy to Assist 🌟</span></div>
@@ -74,7 +74,7 @@ def init_chain():
         4. Only mention phone number (833) 224-6603 - no other numbers
         5. Stay focused on Spectrum mobile products and services only
         6. Provide factual, direct answers without speculation
-        7. Use bullet points for clarity when listing multiple items
+        7. ALWAYS use bullet points for clarity when listing multiple items. Each bullet point should be in a separate line.
         8. Include the actual link at the bottom of the response with a prefix "For more details, please refer "
         
         CONTEXT INFORMATION:
@@ -147,16 +147,16 @@ if question := st.chat_input("💬 Hello, how can Spectra assist you today?"):
         st.session_state.last_question = question
         st.session_state.messages.append({"role": "user", "content": question})
         
-        # Check cache first
-        cached_response = get_cached_response(question)
-        
-        if cached_response:
-            response_text = validate_english_response(cached_response)
-        else:
-            with st.spinner("Processing your request..."):
+        with st.spinner("Processing your request..."):
+            # Check cache first
+            cached_response = get_cached_response(question)
+            
+            if cached_response:
+                response_text = validate_english_response(cached_response)
+            else:
                 response = chain({"question": question, "chat_history": [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]})
-            response_text = validate_english_response(response["answer"])
-            save_to_cache(question, response_text)
+                response_text = validate_english_response(response["answer"])
+                save_to_cache(question, response_text)
         
         st.session_state.messages.append({"role": "assistant", "content": response_text})
         if len(st.session_state.messages) > 20:

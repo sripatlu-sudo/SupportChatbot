@@ -13,13 +13,15 @@ st.set_page_config(page_title="💬 Chat", layout="centered", initial_sidebar_st
 
 st.markdown("""
 <style>
+@keyframes input-marquee {0% {background-position: 0% 50%} 50% {background-position: 100% 50%} 100% {background-position: 0% 50%}}
 .stApp{background:#ffffff;max-width:400px;margin:0 auto;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);font-family:'Arial',sans-serif}
 header{visibility:hidden}
 .main .block-container{padding:1rem;max-width:400px}
 .chat-header{background:linear-gradient(45deg,#1976d2,#7b1fa2);color:white;padding:15px;border-radius:15px 15px 0 0;text-align:center;font-weight:600;margin:-1rem -1rem 1rem -1rem}
 .chat-container{height:300px;overflow-y:auto;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:10px}
 .welcome-badge{display:inline-block;background:linear-gradient(45deg,#4caf50,#81c784);color:#ffffff;padding:6px 16px;border-radius:20px;font-size:14px;font-weight:500;margin:10px auto;box-shadow:0 3px 10px rgba(76,175,80,0.3)}
-stChatInput>div{border-radius:25px}
+.stChatInput{position:relative;padding:3px;border-radius:28px;background:linear-gradient(45deg,#1976d2,#7b1fa2,#4caf50,#81c784);background-size:300% 300%;animation:input-marquee 2s ease infinite}
+stChatInput>div{border-radius:25px;background:#ffffff}
 .stChatInput input::placeholder{color:#ff9800!important}
 .stSpinner>div{display:flex;justify-content:center;align-items:center;height:100px}
 </style>
@@ -54,7 +56,7 @@ def init_chain():
         5. Stay focused on Spectrum mobile products and services only
         6. Provide factual, direct answers without speculation
         7. Use bullet points for clarity when listing multiple items
-        8. Include the actual link at the bottom of the response with a prefix "For more details, please refer "
+        8. Include the actual link at he bottom of the response with a prefix "For more details, please refer "
         
         CONTEXT INFORMATION:
         {context}
@@ -187,8 +189,8 @@ if question := st.chat_input("💬 Hello, how can Spectra assist you?"):
         with col2:
             with st.spinner("Thinking..."):
                 response = chain({"question": question, "chat_history": []})
-        response_text = validate_response_quality(response["answer"], question)
-        save_to_cache(question, response_text)
+                response_text = validate_response_quality(response["answer"], question)
+                save_to_cache(question, response_text)
     
     st.session_state.messages.append({"role": "assistant", "content": response_text})
     st.rerun()
